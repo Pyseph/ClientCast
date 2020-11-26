@@ -26,7 +26,6 @@ local ClientCaster = {}
 local DebugObject = {}
 
 local VisualizedAttachments = {}
-local AlreadyCleaned = false
 local TrailTransparency = NumberSequence.new({
 	NumberSequenceKeypoint.new(0, 0),
 	NumberSequenceKeypoint.new(1, 1)
@@ -68,15 +67,15 @@ local CollisionBaseName = {
 function ClientCaster:Initialize()
 	ClientCast.InitiatedCasters[self] = {}
 end
-function ClientCaster:Stop()
-	ClientCast.InitiatedCasters[self] = nil
-end
 function ClientCaster:Destroy()
 	ClientCast.InitiatedCasters[self] = nil
 	self.RaycastParams = nil
 	self.Object = nil
 
 	self._Maid:Destroy()
+end
+function ClientCaster:Stop()
+	ClientCast.InitiatedCasters[self] = nil
 end
 function ClientCaster:Debug(Bool)
 	self.Debug = Bool
@@ -115,35 +114,38 @@ function ClientCast.new(Object, RaycastParameters)
 	return CasterObject
 end
 
+function UpdateAttachment(Attachment, Caster, LastPositions)
+	if Attachment.ClassName == 'Attachment' and Attachment.Name == Settings.AttachmentName then
+		local CurrentPosition = Attachment.WorldPosition
+		local LastPosition = LastPositions[Attachment] or CurrentPosition
+	
+		if CurrentPosition ~= LastPosition then
+			local RaycastResult = workspace:Raycast(CurrentPosition, CurrentPosition - LastPosition, Caster.RaycastParams)
+
+			if RaycastResult then
+				for CollisionEvent in next, Caster._CollidedEvents.Any do
+					CollisionEvent:Invoke(RaycastResult)
+				end
+
+				local ModelAncestor = RaycastResult.Instance:FindFirstAncestorOfClass('Model')
+				local Humanoid = ModelAncestor and ModelAncestor:FindFirstChildOfClass('Humanoid')
+				if Humanoid then
+					for HumanoidEvent in next, Caster._CollidedEvents.Humanoid do
+						HumanoidEvent:Invoke(RaycastResult, Humanoid)
+					end
+				end
+			end
+
+			DebugObject:Visualize(Caster.Debug, Attachment)
+		end
+
+		LastPositions[Attachment] = CurrentPosition
+	end
+end
 RunService.Heartbeat:Connect(function()
 	for Caster, LastPositions in next, ClientCast.InitiatedCasters do	
 		for _, Attachment in next, Caster.Object:GetChildren() do
-			if Attachment.ClassName == 'Attachment' and Attachment.Name == Settings.AttachmentName then
-				local CurrentPosition = Attachment.WorldPosition
-				local LastPosition = LastPositions[Attachment] or CurrentPosition
-			
-				if CurrentPosition ~= LastPosition then
-					local RaycastResult = workspace:Raycast(CurrentPosition, CurrentPosition - LastPosition, Caster.RaycastParams)
-
-					if RaycastResult then
-						for CollisionEvent in next, Caster._CollidedEvents.Any do
-							CollisionEvent:Invoke(RaycastResult)
-						end
-
-						local ModelAncestor = RaycastResult.Instance:FindFirstAncestorOfClass('Model')
-						local Humanoid = ModelAncestor and ModelAncestor:FindFirstChildOfClass('Humanoid')
-						if Humanoid then
-							for HumanoidEvent in next, Caster._CollidedEvents.Humanoid do
-								HumanoidEvent:Invoke(RaycastResult, Humanoid)
-							end
-						end
-					end
-
-					DebugObject:Visualize(Caster.Debug, Attachment)
-				end
-
-				LastPositions[Attachment] = CurrentPosition
-			end
+			UpdateAttachment(Attachment, Catser, LastPositions)
 		end
 	end
 end)
