@@ -9,7 +9,7 @@ local Settings = {
 }
 
 if Settings.AutoSetup then
-	require(script.Parent.ClientConnection)
+	require(script.Parent.ClientConnection)(ClientCast)
 end
 
 ClientCast.Settings = Settings
@@ -149,9 +149,11 @@ function UpdateAttachment(Attachment, Caster, LastPositions)
 	end
 end
 RunService.Heartbeat:Connect(function()
-	for Caster, LastPositions in next, ClientCast.InitiatedCasters do	
-		for _, Attachment in next, Caster.Object:GetChildren() do
-			UpdateAttachment(Attachment, Catser, LastPositions)
+	for Caster, LastPositions in next, ClientCast.InitiatedCasters do
+		if Caster.Replication == 'None' then
+			for _, Attachment in next, Caster.Object:GetChildren() do
+				UpdateAttachment(Attachment, Catser, LastPositions)
+			end
 		end
 	end
 end)
