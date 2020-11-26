@@ -27,7 +27,7 @@ local DebugObject = {}
 
 local VisualizedAttachments = {}
 local TrailTransparency = NumberSequence.new({
-	NumberSequenceKeypoint.new(0, 0),
+	NumberSequenceKeypoint.new(0.5, 0),
 	NumberSequenceKeypoint.new(1, 1)
 })
 function DebugObject:Visualize(CasterDebug, Attachment)
@@ -114,6 +114,21 @@ function ClientCast.new(Object, RaycastParameters)
 	return CasterObject
 end
 
+function UpdateCasterEvents(Caster, RaycastResult)
+	if RaycastResult then
+		for CollisionEvent in next, Caster._CollidedEvents.Any do
+			CollisionEvent:Invoke(RaycastResult)
+		end
+
+		local ModelAncestor = RaycastResult.Instance:FindFirstAncestorOfClass('Model')
+		local Humanoid = ModelAncestor and ModelAncestor:FindFirstChildOfClass('Humanoid')
+		if Humanoid then
+			for HumanoidEvent in next, Caster._CollidedEvents.Humanoid do
+				HumanoidEvent:Invoke(RaycastResult, Humanoid)
+			end
+		end
+	end
+end
 function UpdateAttachment(Attachment, Caster, LastPositions)
 	if Attachment.ClassName == 'Attachment' and Attachment.Name == Settings.AttachmentName then
 		local CurrentPosition = Attachment.WorldPosition
@@ -122,20 +137,7 @@ function UpdateAttachment(Attachment, Caster, LastPositions)
 		if CurrentPosition ~= LastPosition then
 			local RaycastResult = workspace:Raycast(CurrentPosition, CurrentPosition - LastPosition, Caster.RaycastParams)
 
-			if RaycastResult then
-				for CollisionEvent in next, Caster._CollidedEvents.Any do
-					CollisionEvent:Invoke(RaycastResult)
-				end
-
-				local ModelAncestor = RaycastResult.Instance:FindFirstAncestorOfClass('Model')
-				local Humanoid = ModelAncestor and ModelAncestor:FindFirstChildOfClass('Humanoid')
-				if Humanoid then
-					for HumanoidEvent in next, Caster._CollidedEvents.Humanoid do
-						HumanoidEvent:Invoke(RaycastResult, Humanoid)
-					end
-				end
-			end
-
+			UpdateCasterEvents(Caster, RaycastResult)
 			DebugObject:Visualize(Caster.Debug, Attachment)
 		end
 
