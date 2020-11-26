@@ -4,17 +4,21 @@ local Settings = {
 
 	DebugMode = true, -- DebugMode visualizes the rays, from last to current position
 	DebugColor = Color3.new(1, 0, 0), -- The color of the visualized ray
-	DebugLifetime = 1 -- Lifetime of the visualized trail
+	DebugLifetime = 1, -- Lifetime of the visualized trail
+	AutoSetup = true -- Automatically creates a LocalScript and a RemoteEvent to establish a connection to the server, from the client.
 }
+
+if Settings.AutoSetup then
+	require(script.Parent.ClientConnection)
+end
 
 ClientCast.Settings = Settings
 ClientCast.InitiatedCasters = {}
 
 local RunService = game:GetService('RunService')
-local Terrain = workspace:FindFirstChildOfClass('Terrain')
 
-local Maid = require(script.Maid)
-local Connection = require(script.Connection)
+local Maid = require(script.Parent.Maid)
+local Connection = require(script.Parent.Connection)
 
 function AssertType(Object, ExpectedType, Message)
 	if typeof(Object) ~= ExpectedType then
