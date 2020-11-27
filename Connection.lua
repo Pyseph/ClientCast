@@ -1,4 +1,3 @@
-print(script.Parent.Maid)
 local Maid = require(script.Parent.Maid)
 
 local Connection = {}
