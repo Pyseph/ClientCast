@@ -9,7 +9,6 @@ local Settings = {
 }
 
 if Settings.AutoSetup then
-	print(script.Parent.ClientConnection)
 	require(script.Parent.ClientConnection)(ClientCast)
 end
 
@@ -17,13 +16,89 @@ ClientCast.Settings = Settings
 ClientCast.InitiatedCasters = {}
 
 local RunService = game:GetService('RunService')
+local ReplicatedStorage = game:GetService('ReplicatedStorage')
+
+local ReplicationRemote = ReplicatedStorage:FindFirstChild('ClientCast-Replication')
 
 local Maid = require(script.Parent.Maid)
 local Connection = require(script.Parent.Connection)
 
+function SerializeParams(Params)
+	return {
+		FilterDescendantsInstances = {},
+		FilterType = Params.FilterType.Name,
+		IgnoreWater = Params.IgnoreWater,
+		CollisionGroup = Params.CollisionGroup
+	}
+end
+function IsA(Object, Type)
+	return typeof(Object) == Type
+end
+function IsValid(SerializedResult)
+	if not IsA(SerializedResult, 'table') then
+		return false
+	end
+
+	return (SerializedResult.Instance:IsA('BasePart') or SerializedResult.Instance:IsA('Terrain')) and
+			IsA(SerializedResult.Position, 'Vector3') and
+			IsA(SerializedResult.Material, 'EnumItem') and
+			IsA(SerializedResult.Normal, 'Vector3')
+end
+
+local Replication = {}
+local ReplicationBase = {}
+ReplicationBase.__index = ReplicationBase
+
+function ReplicationBase:Connect()
+	ReplicationRemote:FireClient(self.Owner, 'Connect', {
+		Owner = self.Owner, 
+		Object = self.Object,
+		RaycastParams = SerializeParams(self.RaycastParams)
+	})
+	self.Connected = true
+	self.Connection = ReplicationRemote.OnServerEvent:Connect(function(Player, Code, RaycastResult, Humanoid)
+		print(1)
+		if IsValid(RaycastResult) and (Code == 'Any' or Code == 'Humanoid') then
+			print(2)
+			Humanoid = Code == 'Humanoid' and Humanoid or nil
+			for Event in next, self.Caster._CollidedEvents[Code] do
+				Event:Invoke(RaycastResult, Humanoid)
+			end
+		end
+	end)
+end
+function ReplicationBase:Disconnect()
+	ReplicationRemote:FireClient(self.Owner, 'Disconnect', {
+		Owner = self.Owner, 
+		Object = self.Object
+	})
+	self.Connected = false
+	if self.Connection then
+		self.Connection:Disconnect()
+		self.Connection = nil
+	end
+end
+function ReplicationBase:Destroy() self.Connected = false end
+
+function Replication.new(Player, Object, RaycastParameters, Caster)
+	return setmetatable({
+		Owner = Player,
+		Object = Object,
+		RaycastParams = RaycastParameters,
+		Connected = false,
+		Caster = Caster
+	}, ReplicationBase)
+end
+
 function AssertType(Object, ExpectedType, Message)
 	if typeof(Object) ~= ExpectedType then
-		error(string.format(Message, ExpectedType, typeof(Object)), 3)
+		error(string.format(Message, ExpectedType, typeof(Object)), 4)
+	end
+end
+function AssertClass(Object, ExpectedClass, Message)
+	AssertType(Object, 'Instance', Message)
+	if not Object:IsA(ExpectedClass) then
+		error(string.format(Message, ExpectedClass, Object.Class), 4)
 	end
 end
 
@@ -71,9 +146,11 @@ local CollisionBaseName = {
 }
 
 function ClientCaster:Initialize()
+	self._ReplicationConnection:Connect()
 	ClientCast.InitiatedCasters[self] = {}
 end
 function ClientCaster:Destroy()
+	self._ReplicationConnection:Disconnect()
 	ClientCast.InitiatedCasters[self] = nil
 	self.RaycastParams = nil
 	self.Object = nil
@@ -98,23 +175,30 @@ function ClientCaster:__index(Index)
 	return ClientCaster[Index]
 end
 
-function ClientCast.new(Object, RaycastParameters)
-	AssertType(Object, 'Instance', 'Unexpected argument #1 to \'CastObject.new\' (%s expected, got %s)')
-	AssertType(RaycastParameters, 'RaycastParams', 'Unexpected argument #2 to \'CastObject.new\' (%s expected, got %s)')
+function ClientCast.new(NetworkOwner, Object, RaycastParameters)
+	if NetworkOwner ~= 'Any' then
+		AssertClass(NetworkOwner, 'Player', 'Unexpected argument #1 to \'CastObject.new\' (%s expected, got %s)')
+	end
+	AssertType(Object, 'Instance', 'Unexpected argument #2 to \'CastObject.new\' (%s expected, got %s)')
+	AssertType(RaycastParameters, 'RaycastParams', 'Unexpected argument #3 to \'CastObject.new\' (%s expected, got %s)')
 
 	local MaidObject = Maid.new()
 	local CasterObject = setmetatable({
 		RaycastParams = RaycastParameters,
 		Object = Object,
 		Debug = false,
+		Owner = NetworkOwner,
 
 		_CollidedEvents = {
 			Humanoid = {},
 			Any = {}
 		},
 		_ToClean = {},
-		_Maid = MaidObject
+		_Maid = MaidObject,
+		_ReplicationConnection = false
 	}, ClientCaster)
+	print(NetworkOwner ~= 'Any')
+	CasterObject._ReplicationConnection = NetworkOwner ~= 'Any' and Replication.new(NetworkOwner, Object, RaycastParameters, CasterObject) or nil
 
 	MaidObject:GiveTask(CasterObject)
 	return CasterObject
@@ -152,9 +236,9 @@ function UpdateAttachment(Attachment, Caster, LastPositions)
 end
 RunService.Heartbeat:Connect(function()
 	for Caster, LastPositions in next, ClientCast.InitiatedCasters do
-		if Caster.Replication == 'None' then
+		if Caster.Owner == 'Any' then
 			for _, Attachment in next, Caster.Object:GetChildren() do
-				UpdateAttachment(Attachment, Catser, LastPositions)
+				UpdateAttachment(Attachment, Caster, LastPositions)
 			end
 		end
 	end
