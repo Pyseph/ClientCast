@@ -9,6 +9,7 @@ local Settings = {
 }
 
 if Settings.AutoSetup then
+	print(script.Parent.ClientConnection)
 	require(script.Parent.ClientConnection)(ClientCast)
 end
 
@@ -31,6 +32,7 @@ local DebugObject = {}
 
 local VisualizedAttachments = {}
 local TrailTransparency = NumberSequence.new({
+	NumberSequenceKeypoint.new(0, 0),
 	NumberSequenceKeypoint.new(0.5, 0),
 	NumberSequenceKeypoint.new(1, 1)
 })
@@ -137,7 +139,7 @@ function UpdateAttachment(Attachment, Caster, LastPositions)
 	if Attachment.ClassName == 'Attachment' and Attachment.Name == Settings.AttachmentName then
 		local CurrentPosition = Attachment.WorldPosition
 		local LastPosition = LastPositions[Attachment] or CurrentPosition
-	
+
 		if CurrentPosition ~= LastPosition then
 			local RaycastResult = workspace:Raycast(CurrentPosition, CurrentPosition - LastPosition, Caster.RaycastParams)
 
