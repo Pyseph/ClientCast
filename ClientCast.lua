@@ -40,9 +40,9 @@ function IsValid(SerializedResult)
 	end
 
 	return (SerializedResult.Instance:IsA('BasePart') or SerializedResult.Instance:IsA('Terrain')) and
-			IsA(SerializedResult.Position, 'Vector3') and
-			IsA(SerializedResult.Material, 'EnumItem') and
-			IsA(SerializedResult.Normal, 'Vector3')
+		IsA(SerializedResult.Position, 'Vector3') and
+		IsA(SerializedResult.Material, 'EnumItem') and
+		IsA(SerializedResult.Normal, 'Vector3')
 end
 
 local Replication = {}
@@ -146,11 +146,15 @@ local CollisionBaseName = {
 }
 
 function ClientCaster:Initialize()
-	self._ReplicationConnection:Connect()
+	if self._ReplicationConnection then
+		self._ReplicationConnection:Connect()
+	end
 	ClientCast.InitiatedCasters[self] = {}
 end
 function ClientCaster:Destroy()
-	self._ReplicationConnection:Disconnect()
+	if self._ReplicationConnection then
+		self._ReplicationConnection:Disconnect()
+	end
 	ClientCast.InitiatedCasters[self] = nil
 	self.RaycastParams = nil
 	self.Object = nil
@@ -197,7 +201,6 @@ function ClientCast.new(NetworkOwner, Object, RaycastParameters)
 		_Maid = MaidObject,
 		_ReplicationConnection = false
 	}, ClientCaster)
-	print(NetworkOwner ~= 'Any')
 	CasterObject._ReplicationConnection = NetworkOwner ~= 'Any' and Replication.new(NetworkOwner, Object, RaycastParameters, CasterObject) or nil
 
 	MaidObject:GiveTask(CasterObject)
