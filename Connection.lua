@@ -1,3 +1,4 @@
+print(script.Parent.Maid)
 local Maid = require(script.Parent.Maid)
 
 local Connection = {}
@@ -36,7 +37,7 @@ function InvokedBase:Connect(f)
 		Connected = true
 	}
 	Data.Destroy = Data.Disconnect
-	
+
 	ConnectionReference._Maid['Clean' .. Timestamp .. 'Connection'] = Data
 	ConnectionReference.Listeners[Timestamp] = Data
 	return Data
@@ -59,7 +60,7 @@ function Connection.new()
 		_Maid = Maid.new()
 	}, ConnectionBase)
 	ConnectionObject.Invoked._Reference = ConnectionObject
-	
+
 	return ConnectionObject
 end
 
