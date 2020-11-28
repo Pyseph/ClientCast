@@ -1,6 +1,11 @@
 return function(ClientCast)
 	local StarterPlayer = game:GetService('StarterPlayer')
+	local ReplicatedStorage = game:GetService('ReplicatedStorage')
 	local Players = game:GetService('Players')
+
+	local ReplicationRemote = Instance.new('RemoteEvent')
+	ReplicationRemote.Name = 'ClientCast-Replication'
+	ReplicationRemote.Parent = ReplicatedStorage
 
 	local ScriptsHolder = script.Parent
 	local ClientHandler = ScriptsHolder.ClientHandler
