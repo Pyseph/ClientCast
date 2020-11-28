@@ -50,26 +50,30 @@ local ReplicationBase = {}
 ReplicationBase.__index = ReplicationBase
 
 function ReplicationBase:Connect()
-	ReplicationRemote:FireClient(self.Owner, 'Connect', {
-		Owner = self.Owner, 
-		Object = self.Object,
-		RaycastParams = SerializeParams(self.RaycastParams)
-	})
-	self.Connected = true
-	self.Connection = ReplicationRemote.OnServerEvent:Connect(function(Player, Code, RaycastResult, Humanoid)
-		if IsValid(RaycastResult) and (Code == 'Any' or Code == 'Humanoid') then
-			Humanoid = Code == 'Humanoid' and Humanoid or nil
-			for Event in next, self.Caster._CollidedEvents[Code] do
-				Event:Invoke(RaycastResult, Humanoid)
+	if typeof(self.Owner) == 'Instance' and self.Owner:IsA('Player') then
+		ReplicationRemote:FireClient(self.Owner, 'Connect', {
+			Owner = self.Owner, 
+			Object = self.Object,
+			RaycastParams = SerializeParams(self.RaycastParams)
+		})
+		self.Connected = true
+		self.Connection = ReplicationRemote.OnServerEvent:Connect(function(Player, Code, RaycastResult, Humanoid)
+			if Player == self.Owner and IsValid(RaycastResult) and (Code == 'Any' or Code == 'Humanoid') then
+				Humanoid = Code == 'Humanoid' and Humanoid or nil
+				for Event in next, self.Caster._CollidedEvents[Code] do
+					Event:Invoke(RaycastResult, Humanoid)
+				end
 			end
-		end
-	end)
+		end)
+	end
 end
 function ReplicationBase:Disconnect()
-	ReplicationRemote:FireClient(self.Owner, 'Disconnect', {
-		Owner = self.Owner, 
-		Object = self.Object
-	})
+	if typeof(self.Owner) == 'Instance' and self.Owner:IsA('Player') then
+		ReplicationRemote:FireClient(self.Owner, 'Disconnect', {
+			Owner = self.Owner, 
+			Object = self.Object
+		})
+	end
 	self.Connected = false
 	if self.Connection then
 		self.Connection:Disconnect()
@@ -117,6 +121,13 @@ local TrailTransparency = NumberSequence.new({
 	NumberSequenceKeypoint.new(0.5, 0),
 	NumberSequenceKeypoint.new(1, 1)
 })
+
+function DebugObject:Disable(Attachment)
+	local SavedAttachment = VisualizedAttachments[Attachment]
+	if SavedAttachment then
+		SavedAttachment.Trail.Enabled = false
+	end
+end
 function DebugObject:Visualize(CasterDebug, Attachment)
 	local SavedAttachment = VisualizedAttachments[Attachment]
 
@@ -140,9 +151,13 @@ function DebugObject:Visualize(CasterDebug, Attachment)
 		TrailAttachment.Parent = Attachment.Parent
 
 		VisualizedAttachments[Attachment] = TrailAttachment
-	elseif not Settings.DebugMode and not CasterDebug and SavedAttachment then
-		SavedAttachment:Destroy()
-		VisualizedAttachments[Attachment] = nil
+	elseif SavedAttachment then
+		if not Settings.DebugMode and not CasterDebug then
+			SavedAttachment:Destroy()
+			VisualizedAttachments[Attachment] = nil
+		elseif not SavedAttachment.Trail.Enabled then
+			SavedAttachment.Trail.Enabled = true
+		end
 	end
 end
 
@@ -151,7 +166,7 @@ local CollisionBaseName = {
 	HumanoidCollided = 'Humanoid'
 }
 
-function ClientCaster:Initialize()
+function ClientCaster:Start()
 	if self._ReplicationConnection then
 		self._ReplicationConnection:Connect()
 	end
@@ -172,15 +187,19 @@ function ClientCaster:Stop()
 end
 function ClientCaster:SetOwner(NewOwner)
 	IsValidOwner(NewOwner)
-
 	local ReplConn = self._ReplicationConnection
 	if ReplConn then
 		ReplConn:Disconnect()
-		if NewOwner ~= nil then
-			ReplConn:Connect()
-		end
 	end
 	self.Owner = NewOwner
+	if NewOwner ~= nil and ReplConn then
+		ReplConn:Connect()
+	end
+	for _, Attachment in next, self.Object:GetChildren() do
+		if Attachment.ClassName == 'Attachment' and Attachment.Name == Settings.AttachmentName then
+			DebugObject:Disable(Attachment)
+		end
+	end
 end
 function ClientCaster:GetOwner()
 	return self.Owner
