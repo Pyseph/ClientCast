@@ -1,5 +1,4 @@
 return function(ClientCast)
-	print('Called')
 	local StarterPlayer = game:GetService('StarterPlayer')
 	local ReplicatedStorage = game:GetService('ReplicatedStorage')
 	local Players = game:GetService('Players')
@@ -21,6 +20,6 @@ return function(ClientCast)
 	CloneHandler().Parent = StarterPlayer:FindFirstChildOfClass('StarterPlayerScripts')
 
 	for Idx, Player in next, Players:GetPlayers() do
-		CloneHandler().Parent = Player:FindFirstChildOfClass('StarterPlayerScripts')
+		CloneHandler().Parent = Player:FindFirstChildOfClass('PlayerScripts')
 	end
 end
