@@ -40,9 +40,9 @@ function IsValid(SerializedResult)
 	end
 
 	return (SerializedResult.Instance:IsA('BasePart') or SerializedResult.Instance:IsA('Terrain')) and
-		IsA(SerializedResult.Position, 'Vector3') and
-		IsA(SerializedResult.Material, 'EnumItem') and
-		IsA(SerializedResult.Normal, 'Vector3')
+			IsA(SerializedResult.Position, 'Vector3') and
+			IsA(SerializedResult.Material, 'EnumItem') and
+			IsA(SerializedResult.Normal, 'Vector3')
 end
 
 local Replication = {}
@@ -57,9 +57,7 @@ function ReplicationBase:Connect()
 	})
 	self.Connected = true
 	self.Connection = ReplicationRemote.OnServerEvent:Connect(function(Player, Code, RaycastResult, Humanoid)
-		print(1)
 		if IsValid(RaycastResult) and (Code == 'Any' or Code == 'Humanoid') then
-			print(2)
 			Humanoid = Code == 'Humanoid' and Humanoid or nil
 			for Event in next, self.Caster._CollidedEvents[Code] do
 				Event:Invoke(RaycastResult, Humanoid)
@@ -99,6 +97,14 @@ function AssertClass(Object, ExpectedClass, Message)
 	AssertType(Object, 'Instance', Message)
 	if not Object:IsA(ExpectedClass) then
 		error(string.format(Message, ExpectedClass, Object.Class), 4)
+	end
+end
+function IsValidOwner(Value)
+	local IsInstance = typeof(Value) == 'Instance'
+	if not IsInstance and Value ~= nil then
+		error('Unable to cast value to Object', 3)
+	elseif IsInstance and not Value:IsA('Player') then
+		error('SetOwner only takes player or \'nil\' instance as an argument.', 3)
 	end
 end
 
@@ -164,8 +170,36 @@ end
 function ClientCaster:Stop()
 	ClientCast.InitiatedCasters[self] = nil
 end
+function ClientCaster:SetOwner(NewOwner)
+	IsValidOwner(NewOwner)
+
+	local ReplConn = self._ReplicationConnection
+	if ReplConn then
+		ReplConn:Disconnect()
+		if NewOwner ~= nil then
+			ReplConn:Connect()
+		end
+	end
+	self.Owner = NewOwner
+end
+function ClientCaster:GetOwner()
+	return self.Owner
+end
+function ClientCaster:SetObject(Object)
+	AssertType(Object, 'Instance', 'Unexpected argument #1 to \'ClientCaster:SetObject\' (%s expected, got %s)')
+	self.Object = Object
+	ClientCaster:SetOwner(self.Owner)
+end
+function ClientCaster:GetObject()
+	return self.Object
+end
+function ClientCaster:EditRaycastParams(RaycastParameters)
+	self.RaycastParams = RaycastParameters
+	ClientCaster:SetOwner(self.Owner)
+end
 function ClientCaster:Debug(Bool)
 	self.Debug = Bool
+	ClientCaster:SetOwner(self.Owner)
 end
 function ClientCaster:__index(Index)
 	local CollisionIndex = CollisionBaseName[Index]
@@ -179,10 +213,8 @@ function ClientCaster:__index(Index)
 	return ClientCaster[Index]
 end
 
-function ClientCast.new(NetworkOwner, Object, RaycastParameters)
-	if NetworkOwner ~= 'Any' then
-		AssertClass(NetworkOwner, 'Player', 'Unexpected argument #1 to \'CastObject.new\' (%s expected, got %s)')
-	end
+function ClientCast.new(Object, RaycastParameters, NetworkOwner)
+	IsValidOwner(NetworkOwner)
 	AssertType(Object, 'Instance', 'Unexpected argument #2 to \'CastObject.new\' (%s expected, got %s)')
 	AssertType(RaycastParameters, 'RaycastParams', 'Unexpected argument #3 to \'CastObject.new\' (%s expected, got %s)')
 
@@ -201,7 +233,7 @@ function ClientCast.new(NetworkOwner, Object, RaycastParameters)
 		_Maid = MaidObject,
 		_ReplicationConnection = false
 	}, ClientCaster)
-	CasterObject._ReplicationConnection = NetworkOwner ~= 'Any' and Replication.new(NetworkOwner, Object, RaycastParameters, CasterObject) or nil
+	CasterObject._ReplicationConnection = NetworkOwner ~= nil and Replication.new(NetworkOwner, Object, RaycastParameters, CasterObject)
 
 	MaidObject:GiveTask(CasterObject)
 	return CasterObject
@@ -239,7 +271,7 @@ function UpdateAttachment(Attachment, Caster, LastPositions)
 end
 RunService.Heartbeat:Connect(function()
 	for Caster, LastPositions in next, ClientCast.InitiatedCasters do
-		if Caster.Owner == 'Any' then
+		if Caster.Owner == nil then
 			for _, Attachment in next, Caster.Object:GetChildren() do
 				UpdateAttachment(Attachment, Caster, LastPositions)
 			end
