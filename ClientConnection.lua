@@ -21,7 +21,7 @@ return function(ClientCast)
 
 	for Idx, Player in next, Players:GetPlayers() do
 		if Player.Character then
-			CloneHandler().Parent = Player.Character
+			CloneHandler().Parent = Player:FindFirstChildOfClass('StarterPlayerScripts')
 		end
 	end
 
