@@ -1,6 +1,7 @@
 return function(ClientCast)
 	local StarterPlayer = game:GetService('StarterPlayer')
 	local ReplicatedStorage = game:GetService('ReplicatedStorage')
+	local ReplicatedFirst = game:GetService('ReplicatedFirst')
 	local Players = game:GetService('Players')
 
 	local ReplicationRemote = Instance.new('RemoteEvent')
@@ -20,8 +21,6 @@ return function(ClientCast)
 	CloneHandler().Parent = StarterPlayer:FindFirstChildOfClass('StarterPlayerScripts')
 
 	for Idx, Player in next, Players:GetPlayers() do
-		if Player.Character then
-			CloneHandler().Parent = Player:FindFirstChildOfClass('StarterPlayerScripts')
-		end
+		CloneHandler().Parent = Player:FindFirstChildOfClass('PlayerGui')
 	end
 end
