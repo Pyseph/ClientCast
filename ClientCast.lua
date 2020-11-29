@@ -40,9 +40,9 @@ function IsValid(SerializedResult)
 	end
 
 	return (SerializedResult.Instance:IsA('BasePart') or SerializedResult.Instance:IsA('Terrain')) and
-			IsA(SerializedResult.Position, 'Vector3') and
-			IsA(SerializedResult.Material, 'EnumItem') and
-			IsA(SerializedResult.Normal, 'Vector3')
+		IsA(SerializedResult.Position, 'Vector3') and
+		IsA(SerializedResult.Material, 'EnumItem') and
+		IsA(SerializedResult.Normal, 'Vector3')
 end
 
 local Replication = {}
@@ -51,10 +51,12 @@ ReplicationBase.__index = ReplicationBase
 
 function ReplicationBase:Connect()
 	if typeof(self.Owner) == 'Instance' and self.Owner:IsA('Player') then
+		print(debug.traceback():gsub('\n', ' | '))
 		ReplicationRemote:FireClient(self.Owner, 'Connect', {
 			Owner = self.Owner, 
 			Object = self.Object,
-			RaycastParams = SerializeParams(self.RaycastParams)
+			RaycastParams = SerializeParams(self.RaycastParams),
+			Id = self.Caster._UniqueId
 		})
 		self.Connected = true
 		self.Connection = ReplicationRemote.OnServerEvent:Connect(function(Player, Code, RaycastResult, Humanoid)
@@ -68,10 +70,12 @@ function ReplicationBase:Connect()
 	end
 end
 function ReplicationBase:Disconnect()
+	print(debug.traceback():gsub('\n', ' | '))
 	if typeof(self.Owner) == 'Instance' and self.Owner:IsA('Player') then
 		ReplicationRemote:FireClient(self.Owner, 'Disconnect', {
 			Owner = self.Owner, 
-			Object = self.Object
+			Object = self.Object,
+			Id = self.Caster._UniqueId
 		})
 	end
 	self.Connected = false
@@ -80,7 +84,9 @@ function ReplicationBase:Disconnect()
 		self.Connection = nil
 	end
 end
-function ReplicationBase:Destroy() self.Connected = false end
+function ReplicationBase:Destroy() 
+	self:Disconnect() 
+end
 
 function Replication.new(Player, Object, RaycastParameters, Caster)
 	return setmetatable({
@@ -167,14 +173,14 @@ local CollisionBaseName = {
 }
 
 function ClientCaster:Start()
-	if self._ReplicationConnection then
+	if self._ReplicationConnection and not self._ReplicationConnection.Connected then
 		self._ReplicationConnection:Connect()
 	end
 	ClientCast.InitiatedCasters[self] = {}
 end
 function ClientCaster:Destroy()
 	if self._ReplicationConnection then
-		self._ReplicationConnection:Disconnect()
+		self._ReplicationConnection:Destroy()
 	end
 	ClientCast.InitiatedCasters[self] = nil
 	self.RaycastParams = nil
@@ -187,11 +193,15 @@ function ClientCaster:Stop()
 end
 function ClientCaster:SetOwner(NewOwner)
 	IsValidOwner(NewOwner)
-	local ReplConn = self._ReplicationConnection
-	if ReplConn then
-		ReplConn:Disconnect()
+	local OldConn = self._ReplicationConnection
+	local ReplConn = NewOwner ~= nil and Replication.new(NewOwner, self.Object, self.RaycastParams, self)
+	self._ReplicationConnection = ReplConn
+
+	if OldConn then
+		OldConn:Destroy()
 	end
 	self.Owner = NewOwner
+
 	if NewOwner ~= nil and ReplConn then
 		ReplConn:Connect()
 	end
@@ -232,6 +242,11 @@ function ClientCaster:__index(Index)
 	return ClientCaster[Index]
 end
 
+local UniqueId = 0
+function GenerateId()
+	UniqueId += 1
+	return UniqueId
+end
 function ClientCast.new(Object, RaycastParameters, NetworkOwner)
 	IsValidOwner(NetworkOwner)
 	AssertType(Object, 'Instance', 'Unexpected argument #2 to \'CastObject.new\' (%s expected, got %s)')
@@ -250,7 +265,8 @@ function ClientCast.new(Object, RaycastParameters, NetworkOwner)
 		},
 		_ToClean = {},
 		_Maid = MaidObject,
-		_ReplicationConnection = false
+		_ReplicationConnection = false,
+		_UniqueId = GenerateId()
 	}, ClientCaster)
 	CasterObject._ReplicationConnection = NetworkOwner ~= nil and Replication.new(NetworkOwner, Object, RaycastParameters, CasterObject)
 
