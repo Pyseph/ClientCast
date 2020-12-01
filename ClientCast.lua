@@ -51,9 +51,8 @@ ReplicationBase.__index = ReplicationBase
 
 function ReplicationBase:Connect()
 	if typeof(self.Owner) == 'Instance' and self.Owner:IsA('Player') then
-		print(debug.traceback():gsub('\n', ' | '))
 		ReplicationRemote:FireClient(self.Owner, 'Connect', {
-			Owner = self.Owner, 
+			Owner = self.Owner,
 			Object = self.Object,
 			RaycastParams = SerializeParams(self.RaycastParams),
 			Id = self.Caster._UniqueId
@@ -70,7 +69,6 @@ function ReplicationBase:Connect()
 	end
 end
 function ReplicationBase:Disconnect()
-	print(debug.traceback():gsub('\n', ' | '))
 	if typeof(self.Owner) == 'Instance' and self.Owner:IsA('Player') then
 		ReplicationRemote:FireClient(self.Owner, 'Disconnect', {
 			Owner = self.Owner, 
@@ -84,9 +82,7 @@ function ReplicationBase:Disconnect()
 		self.Connection = nil
 	end
 end
-function ReplicationBase:Destroy() 
-	self:Disconnect() 
-end
+function ReplicationBase:Destroy() self:Disconnect() self.Connected = false end
 
 function Replication.new(Player, Object, RaycastParameters, Caster)
 	return setmetatable({
@@ -173,14 +169,14 @@ local CollisionBaseName = {
 }
 
 function ClientCaster:Start()
-	if self._ReplicationConnection and not self._ReplicationConnection.Connected then
+	if self._ReplicationConnection then
 		self._ReplicationConnection:Connect()
 	end
 	ClientCast.InitiatedCasters[self] = {}
 end
 function ClientCaster:Destroy()
 	if self._ReplicationConnection then
-		self._ReplicationConnection:Destroy()
+		self._ReplicationConnection:Disconnect()
 	end
 	ClientCast.InitiatedCasters[self] = nil
 	self.RaycastParams = nil
