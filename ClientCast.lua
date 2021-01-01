@@ -80,7 +80,6 @@ ReplicationBase.__index = ReplicationBase
 
 function ReplicationBase:Connect()
 	if typeof(self.Owner) == 'Instance' and self.Owner:IsA('Player') then
-		print(debug.traceback():gsub('\n', ' | '))
 		ReplicationRemote:FireClient(self.Owner, 'Connect', {
 			Owner = self.Owner, 
 			Object = self.Object,
@@ -99,7 +98,6 @@ function ReplicationBase:Connect()
 	end
 end
 function ReplicationBase:Disconnect()
-	print(debug.traceback():gsub('\n', ' | '))
 	if typeof(self.Owner) == 'Instance' and self.Owner:IsA('Player') then
 		ReplicationRemote:FireClient(self.Owner, 'Disconnect', {
 			Owner = self.Owner, 
