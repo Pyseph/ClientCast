@@ -15,6 +15,35 @@ end
 ClientCast.Settings = Settings
 ClientCast.InitiatedCasters = {}
 
+function AssertType(Object, ExpectedType, Message)
+	if typeof(Object) ~= ExpectedType then
+		error(string.format(Message, ExpectedType, typeof(Object)), 4)
+	end
+end
+
+local DebugColorSequence = Settings.DebugColor
+local DebugLifetime = Settings.DebugLifetime
+
+function Settings:GetDebugColor()
+	return self.DebugColor
+end
+function Settings:GetDebugMode()
+	return self.DebugMode
+end
+function Settings:GetDebugLifetime()
+	return DebugLifetime
+end
+function Settings:SetDebugLifetime(Lifetime)
+	AssertType(Lifetime, 'number', 'Invalid argument #1 to SetDebugLifetime (%s expected, got %s)')
+	DebugLifetime = Lifetime
+	self.DebugLifetime = Lifetime
+end
+function Settings:SetDebugColor(Color)
+	AssertType(Color, 'Color3', 'Invalid argument #1 to SetDebugColor (%s expected, got %s)')
+	DebugColorSequence = ColorSequence.new(self.DebugColor)
+	self.DebugColor = Color
+end
+
 local RunService = game:GetService('RunService')
 local ReplicatedStorage = game:GetService('ReplicatedStorage')
 
@@ -51,8 +80,9 @@ ReplicationBase.__index = ReplicationBase
 
 function ReplicationBase:Connect()
 	if typeof(self.Owner) == 'Instance' and self.Owner:IsA('Player') then
+		print(debug.traceback():gsub('\n', ' | '))
 		ReplicationRemote:FireClient(self.Owner, 'Connect', {
-			Owner = self.Owner,
+			Owner = self.Owner, 
 			Object = self.Object,
 			RaycastParams = SerializeParams(self.RaycastParams),
 			Id = self.Caster._UniqueId
@@ -69,6 +99,7 @@ function ReplicationBase:Connect()
 	end
 end
 function ReplicationBase:Disconnect()
+	print(debug.traceback():gsub('\n', ' | '))
 	if typeof(self.Owner) == 'Instance' and self.Owner:IsA('Player') then
 		ReplicationRemote:FireClient(self.Owner, 'Disconnect', {
 			Owner = self.Owner, 
@@ -82,7 +113,9 @@ function ReplicationBase:Disconnect()
 		self.Connection = nil
 	end
 end
-function ReplicationBase:Destroy() self:Disconnect() self.Connected = false end
+function ReplicationBase:Destroy() 
+	self:Disconnect() 
+end
 
 function Replication.new(Player, Object, RaycastParameters, Caster)
 	return setmetatable({
@@ -94,11 +127,6 @@ function Replication.new(Player, Object, RaycastParameters, Caster)
 	}, ReplicationBase)
 end
 
-function AssertType(Object, ExpectedType, Message)
-	if typeof(Object) ~= ExpectedType then
-		error(string.format(Message, ExpectedType, typeof(Object)), 4)
-	end
-end
 function AssertClass(Object, ExpectedClass, Message)
 	AssertType(Object, 'Instance', Message)
 	if not Object:IsA(ExpectedClass) then
@@ -130,6 +158,8 @@ function DebugObject:Disable(Attachment)
 		SavedAttachment.Trail.Enabled = false
 	end
 end
+
+local OffsetPosition = Vector3.new(0, 0, 0.1)
 function DebugObject:Visualize(CasterDebug, Attachment)
 	local SavedAttachment = VisualizedAttachments[Attachment]
 
@@ -138,13 +168,13 @@ function DebugObject:Visualize(CasterDebug, Attachment)
 		local TrailAttachment = Instance.new('Attachment')
 
 		TrailAttachment.Name = 'DebugAttachment'
-		TrailAttachment.Position = Attachment.Position - Vector3.new(0, 0, 0.1)
+		TrailAttachment.Position = Attachment.Position - OffsetPosition
 
-		Trail.Color = ColorSequence.new(Settings.DebugColor)
+		Trail.Color = DebugColorSequence
 		Trail.LightEmission = 1
 		Trail.Transparency = TrailTransparency
 		Trail.FaceCamera = true
-		Trail.Lifetime = Settings.DebugLifetime
+		Trail.Lifetime = DebugLifetime
 
 		Trail.Attachment0 = Attachment
 		Trail.Attachment1 = TrailAttachment
@@ -169,14 +199,14 @@ local CollisionBaseName = {
 }
 
 function ClientCaster:Start()
-	if self._ReplicationConnection then
+	if self._ReplicationConnection and not self._ReplicationConnection.Connected then
 		self._ReplicationConnection:Connect()
 	end
 	ClientCast.InitiatedCasters[self] = {}
 end
 function ClientCaster:Destroy()
 	if self._ReplicationConnection then
-		self._ReplicationConnection:Disconnect()
+		self._ReplicationConnection:Destroy()
 	end
 	ClientCast.InitiatedCasters[self] = nil
 	self.RaycastParams = nil
@@ -247,7 +277,7 @@ function ClientCast.new(Object, RaycastParameters, NetworkOwner)
 	IsValidOwner(NetworkOwner)
 	AssertType(Object, 'Instance', 'Unexpected argument #2 to \'CastObject.new\' (%s expected, got %s)')
 	AssertType(RaycastParameters, 'RaycastParams', 'Unexpected argument #3 to \'CastObject.new\' (%s expected, got %s)')
-
+	
 	local MaidObject = Maid.new()
 	local CasterObject = setmetatable({
 		RaycastParams = RaycastParameters,
