@@ -1,4 +1,4 @@
-local Maid = require(script.Parent.Maid)
+local Janitor = require(script.Parent.Janitor)
 
 local Connection = {}
 
@@ -19,7 +19,7 @@ function ConnectionBase:Invoke(...)
 	end
 end
 function ConnectionBase:Destroy()
-	self._Maid:Destroy()
+	self._Janitor:Destroy()
 end
 
 
@@ -37,7 +37,7 @@ function InvokedBase:Connect(f)
 	}
 	Data.Destroy = Data.Disconnect
 
-	ConnectionReference._Maid['Clean' .. Timestamp .. 'Connection'] = Data
+	ConnectionReference._Janitor:Add(Data)
 	ConnectionReference.Listeners[Timestamp] = Data
 	return Data
 end
@@ -45,7 +45,7 @@ function InvokedBase:Wait()
 	local ConnectionReference = self._Reference
 	local Thread = coroutine.running()
 
-	ConnectionReference.Yielded[#ConnectionReference.Yielded + 1] = Thread
+	table.insert(ConnectionReference.Yielded, Thread)
 	return coroutine.yield()
 end
 
@@ -56,7 +56,7 @@ function Connection.new()
 		Listeners = {},
 		Invoked = setmetatable({_Reference = false}, InvokedBase),
 		Yielded = {},
-		_Maid = Maid.new()
+		_Janitor = Janitor.new()
 	}, ConnectionBase)
 	ConnectionObject.Invoked._Reference = ConnectionObject
 

@@ -1,26 +1,30 @@
-return function(ClientCast)
+return function()
 	local StarterPlayer = game:GetService('StarterPlayer')
 	local ReplicatedStorage = game:GetService('ReplicatedStorage')
-	local ReplicatedFirst = game:GetService('ReplicatedFirst')
 	local Players = game:GetService('Players')
 
-	local ReplicationRemote = Instance.new('RemoteEvent')
-	ReplicationRemote.Name = 'ClientCast-Replication'
-	ReplicationRemote.Parent = ReplicatedStorage
+	local function InitRemote(Class, Name)
+		local Remote = Instance.new(Class)
+		Remote.Name = 'ClientCast-' .. Name
+		Remote.Parent = ReplicatedStorage
+	end
+	InitRemote('RemoteEvent', 'Replication')
+	InitRemote('RemoteFunction', 'Ping')
 
 	local ScriptsHolder = script.Parent
 	local ClientHandler = ScriptsHolder.ClientHandler
 
-	local function CloneHandler()
-		local Cloned = ClientHandler:Clone()
-		ScriptsHolder.Maid:Clone().Parent = Cloned
-		ScriptsHolder.Connection:Clone().Parent = Cloned
+	local function CloneHandler(Parent)
+		local ClonedHandler = ClientHandler:Clone()
+		ScriptsHolder.Janitor:Clone().Parent = ClonedHandler
+		ScriptsHolder.Signal:Clone().Parent = ClonedHandler
+		ScriptsHolder.RBXWait:Clone().Parent = ClonedHandler
 
-		return Cloned
+		ClonedHandler.Parent = Parent
 	end
-	CloneHandler().Parent = StarterPlayer:FindFirstChildOfClass('StarterPlayerScripts')
+	CloneHandler(StarterPlayer:FindFirstChildOfClass('StarterPlayerScripts'))
 
-	for Idx, Player in next, Players:GetPlayers() do
-		CloneHandler().Parent = Player:FindFirstChildOfClass('PlayerGui')
+	for _, Player in next, Players:GetPlayers() do
+		CloneHandler(Player:FindFirstChildOfClass('PlayerGui'))
 	end
 end

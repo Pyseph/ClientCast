@@ -5,6 +5,9 @@ local ReplicatedStorage = game:GetService('ReplicatedStorage')
 local RunService = game:GetService('RunService')
 
 local ReplicationRemote = ReplicatedStorage:WaitForChild('ClientCast-Replication')
+local PingRemote = ReplicatedStorage:WaitForChild('ClientCast-Ping')
+
+PingRemote.OnClientInvoke = function() end
 
 local ClientCast = {}
 local Settings = {
@@ -18,8 +21,8 @@ local Settings = {
 ClientCast.Settings = Settings
 ClientCast.InitiatedCasters = {}
 
-local Maid = require(script.Maid)
-local Connection = require(script.Connection)
+local Janitor = require(script.Janitor)
+local Signal = require(script.Signal)
 
 function AssertType(Object, ExpectedType, Message)
 	if typeof(Object) ~= ExpectedType then
@@ -36,6 +39,7 @@ local TrailTransparency = NumberSequence.new({
 	NumberSequenceKeypoint.new(0.5, 0),
 	NumberSequenceKeypoint.new(1, 1)
 })
+local AttachmentOffset = Vector3.new(0, 0, 0.1)
 
 function DebugObject:Disable(Attachment)
 	local SavedAttachment = VisualizedAttachments[Attachment]
@@ -51,7 +55,7 @@ function DebugObject:Visualize(CasterDebug, Attachment)
 		local TrailAttachment = Instance.new('Attachment')
 
 		TrailAttachment.Name = 'DebugAttachment'
-		TrailAttachment.Position = Attachment.Position - Vector3.new(0, 0, 0.1)
+		TrailAttachment.Position = Attachment.Position - AttachmentOffset
 
 		Trail.Color = ColorSequence.new(Settings.DebugColor)
 		Trail.LightEmission = 1
@@ -86,30 +90,27 @@ function ClientCaster:Start()
 end
 function ClientCaster:Destroy()
 	ClientCast.InitiatedCasters[self] = nil
-	
-	for HolderName, EventsHolder in next, self._CollidedEvents do
+
+	for _, EventsHolder in next, self._CollidedEvents do
 		for Event in next, EventsHolder do
 			Event:Destroy()
 		end
 	end
-	for Idx, Child in next, self.Object:GetChildren() do
+	for _, Child in next, self.Object:GetChildren() do
 		if Child:IsA('Attachment') and Child.Name == Settings.AttachmentName then
 			DebugObject:Disable(Child)
 		end
 	end
 
-	self._Maid:Destroy()
+	self._Janitor:Destroy()
 end
 function ClientCaster:Stop()
 	ClientCast.InitiatedCasters[self] = nil
 end
-function ClientCaster:Debug(Bool)
-	self.Debug = Bool
-end
 function ClientCaster:__index(Index)
 	local CollisionIndex = CollisionBaseName[Index]
 	if CollisionIndex then
-		local CollisionEvent = Connection.new()
+		local CollisionEvent = Signal.new()
 		self._CollidedEvents[CollisionIndex][CollisionEvent] = true
 
 		return CollisionEvent.Invoked
@@ -121,21 +122,21 @@ end
 function ClientCast.new(Object, RaycastParameters)
 	AssertType(Object, 'Instance', 'Unexpected argument #1 to \'CastObject.new\' (%s expected, got %s)')
 
-	local MaidObject = Maid.new()
+	local JanitorObject = Janitor.new()
 	local CasterObject = setmetatable({
 		RaycastParams = RaycastParameters,
 		Object = Object,
-		Debug = false,
 
 		_CollidedEvents = {
 			Humanoid = {},
 			Any = {}
 		},
+		_Debug = false,
 		_ToClean = {},
-		_Maid = MaidObject
+		_Janitor = JanitorObject
 	}, ClientCaster)
 
-	MaidObject:GiveTask(CasterObject)
+	JanitorObject:Add(CasterObject)
 	return CasterObject
 end
 
@@ -151,11 +152,11 @@ function DeserializeParams(Input)
 	local Params = RaycastParams.new()
 	for Key, Value in next, Input do
 		if Key == 'FilterType' then
-			Value = Enum['RaycastFilterType'][Value]
+			Value = Enum.RaycastFilterType[Value]
 		end
 		Params[Key] = Value
 	end
-	
+
 	return Params
 end
 function UpdateCasterEvents(RaycastResult)
@@ -178,7 +179,7 @@ function UpdateAttachment(Attachment, Caster, LastPositions)
 			local RaycastResult = workspace:Raycast(CurrentPosition, CurrentPosition - LastPosition, Caster.RaycastParams)
 
 			UpdateCasterEvents(RaycastResult)
-			DebugObject:Visualize(Caster.Debug, Attachment)
+			DebugObject:Visualize(Caster._Debug, Attachment)
 		end
 
 		LastPositions[Attachment] = CurrentPosition
@@ -192,6 +193,7 @@ RunService.Heartbeat:Connect(function()
 		if not Object then
 			continue
 		end
+
 		for _, Attachment in next, Object:GetChildren() do
 			UpdateAttachment(Attachment, Caster, LastPositions)
 		end
