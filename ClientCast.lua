@@ -100,11 +100,11 @@ local Replication = {}
 local ReplicationBase = {}
 ReplicationBase.__index = ReplicationBase
 
-function ReplicationBase:Connect()
+function ReplicationBase:Start()
 	local Owner = self.Owner
 	AssertClass(Owner, 'Player')
 
-	ReplicationRemote:FireClient(Owner, 'Connect', {
+	ReplicationRemote:FireClient(Owner, 'Start', {
 		Owner = Owner,
 		Object = self.Object,
 		Debug = self.Caster._Debug,
@@ -112,7 +112,6 @@ function ReplicationBase:Connect()
 		Id = self.Caster._UniqueId
 	})
 
-	self.Connected = true
 	self.Connection = ReplicationRemote.OnServerEvent:Connect(function(Player, Code, RaycastResult, Humanoid)
 		if Player == Owner and IsValid(RaycastResult) and (Code == 'Any' or Code == 'Humanoid') then
 			Humanoid = Code == 'Humanoid' and Humanoid or nil
@@ -122,17 +121,15 @@ function ReplicationBase:Connect()
 		end
 	end)
 end
-function ReplicationBase:Disconnect()
+function ReplicationBase:Stop(Destroy)
 	local Owner = self.Owner
-	if AssertClass(Owner, 'Player') then
-		ReplicationRemote:FireClient(Owner, 'Disconnect', {
-			Owner = Owner,
-			Object = self.Object,
-			Id = self.Caster._UniqueId
-		})
-	end
+	AssertClass(Owner, 'Player')
 
-	self.Connected = false
+	ReplicationRemote:FireClient(Owner, Destroy and 'Destroy' or 'Stop', {
+		Owner = Owner,
+		Object = self.Object,
+		Id = self.Caster._UniqueId
+	})
 
 	local ReplicationConn = self.Connection
 	if ReplicationConn then
@@ -141,7 +138,7 @@ function ReplicationBase:Disconnect()
 	end
 end
 function ReplicationBase:Destroy()
-	self:Disconnect()
+	self:Stop(true)
 end
 
 function Replication.new(Player, Object, RaycastParameters, Caster)
@@ -149,60 +146,27 @@ function Replication.new(Player, Object, RaycastParameters, Caster)
 		Owner = Player,
 		Object = Object,
 		RaycastParams = RaycastParameters,
-		Connected = false,
 		Caster = Caster
 	}, ReplicationBase)
 end
 
 local ClientCaster = {}
-local DebugObject = {}
 
-local VisualizedAttachments = {}
 local TrailTransparency = NumberSequence.new({
 	NumberSequenceKeypoint.new(0, 0),
-	NumberSequenceKeypoint.new(0.5, 0.5),
+	NumberSequenceKeypoint.new(0.5, 0),
 	NumberSequenceKeypoint.new(1, 1)
 })
+local AttachmentOffset = Vector3.new(0, 0, 0.1)
 
-function DebugObject:Disable(Attachment)
-	local SavedAttachment = VisualizedAttachments[Attachment]
-	if SavedAttachment then
-		SavedAttachment.Trail.Enabled = false
+function ClientCaster:DisableDebug()
+	for _, Trail in next, self._DebugTrails do
+		Trail.Enabled = false
 	end
 end
-function DebugObject:Visualize(CasterDebug, Attachment)
-	local SavedAttachment = VisualizedAttachments[Attachment]
-
-	if (Settings.DebugMode or CasterDebug) and not SavedAttachment then
-		local Trail = Instance.new('Trail')
-		local TrailAttachment = Instance.new('Attachment')
-
-		TrailAttachment.Name = 'DebugAttachment'
-		TrailAttachment.Position = Attachment.Position - Vector3.new(0, 0, 0.1)
-
-		Trail.Color = ColorSequence.new(Settings.DebugColor)
-		Trail.LightEmission = 1
-		Trail.Transparency = TrailTransparency
-		Trail.FaceCamera = true
-		Trail.Lifetime = Settings.DebugLifetime
-
-		Trail.Attachment0 = Attachment
-		Trail.Attachment1 = TrailAttachment
-
-		Trail.Parent = TrailAttachment
-		TrailAttachment.Parent = Attachment.Parent
-
-		VisualizedAttachments[Attachment] = TrailAttachment
-	elseif SavedAttachment then
-		if not Settings.DebugMode and not CasterDebug then
-			SavedAttachment:Destroy()
-			VisualizedAttachments[Attachment] = nil
-		else
-			local Trail = SavedAttachment:FindFirstChild('Trail')
-			if Trail and not Trail.Enabled then
-				SavedAttachment.Trail.Enabled = true
-			end
-		end
+function ClientCaster:StartDebug()
+	for _, Trail in next, self._DebugTrails do
+		Trail.Enabled = true
 	end
 end
 
@@ -215,11 +179,14 @@ function ClientCaster:Start()
 	self.Disabled = false
 
 	local ReplicationConn = self._ReplicationConnection
-	if ReplicationConn and not ReplicationConn.Connected then
-		ReplicationConn:Connect()
+	if ReplicationConn then
+		ReplicationConn:Start()
 	end
 
 	ClientCast.InitiatedCasters[self] = {}
+	if self._Debug then
+		self:StartDebug()
+	end
 end
 function ClientCaster:Destroy()
 	local ReplicationConn = self._ReplicationConnection
@@ -236,11 +203,12 @@ end
 function ClientCaster:Stop()
 	local OldConn = self._ReplicationConnection
 	if OldConn then
-		OldConn:Destroy()
+		OldConn:Stop()
 	end
 
 	ClientCast.InitiatedCasters[self] = nil
 	self.Disabled = true
+	self:DisableDebug()
 end
 function ClientCaster:SetOwner(NewOwner)
 	IsValidOwner(NewOwner)
@@ -295,13 +263,6 @@ function ClientCaster:EditRaycastParams(RaycastParameters)
 	self.RaycastParams = RaycastParameters
 	ClientCaster:SetOwner(self.Owner)
 end
-function ClientCaster:SetDebug(Bool)
-	self._Debug = Bool
-	ClientCaster:SetOwner(self.Owner)
-end
-function ClientCaster:GetDebug()
-	return self._Debug
-end
 
 function ClientCaster:__index(Index)
 	local CollisionIndex = CollisionBaseName[Index]
@@ -326,6 +287,8 @@ function ClientCast.new(Object, RaycastParameters, NetworkOwner)
 	AssertType(Object, 'Instance', 'Unexpected argument #2 to \'CastObject.new\' (%s expected, got %s)')
 	AssertType(RaycastParameters, 'RaycastParams', 'Unexpected argument #3 to \'CastObject.new\' (%s expected, got %s)')
 
+	local DebugTrails = {}
+	local DamagePoints = {}
 	local CasterObject = setmetatable({
 		RaycastParams = RaycastParameters,
 		Object = Object,
@@ -340,8 +303,37 @@ function ClientCast.new(Object, RaycastParameters, NetworkOwner)
 		_ReplicationConnection = false,
 		_Debug = Settings.DebugMode,
 		_ExhaustionTime = 1,
-		_UniqueId = GenerateId()
+		_UniqueId = GenerateId(),
+		DamagePoints = DamagePoints,
+		_DebugTrails = DebugTrails
 	}, ClientCaster)
+
+	for _, Attachment in next, Object:GetChildren() do
+		if Attachment.ClassName == 'Attachment' and Attachment.Name == Settings.AttachmentName then
+			table.insert(DamagePoints, Attachment)
+
+			local Trail = Instance.new('Trail')
+			local TrailAttachment = Instance.new('Attachment')
+
+			TrailAttachment.Name = 'ClientCast-Debug'
+			TrailAttachment.Position = Attachment.Position - AttachmentOffset
+
+			Trail.Color = ColorSequence.new(Settings.DebugColor)
+			Trail.LightEmission = 1
+			Trail.Transparency = TrailTransparency
+			Trail.FaceCamera = true
+			Trail.Lifetime = Settings.DebugLifetime
+
+			Trail.Attachment0 = Attachment
+			Trail.Attachment1 = TrailAttachment
+
+			Trail.Parent = TrailAttachment
+			TrailAttachment.Parent = Attachment.Parent
+
+			table.insert(DebugTrails, Trail)
+		end
+	end
+
 	CasterObject._ReplicationConnection = NetworkOwner ~= nil and Replication.new(NetworkOwner, Object, RaycastParameters, CasterObject)
 	return CasterObject
 end
@@ -370,7 +362,6 @@ local function UpdateAttachment(Attachment, Caster, LastPositions)
 			local RaycastResult = workspace:Raycast(CurrentPosition, CurrentPosition - LastPosition, Caster.RaycastParams)
 
 			UpdateCasterEvents(Caster, RaycastResult)
-			DebugObject:Visualize(Caster._Debug, Attachment)
 		end
 
 		LastPositions[Attachment] = CurrentPosition

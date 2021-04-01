@@ -1,5 +1,6 @@
-wait()
-script.Parent = game:GetService('Players').LocalPlayer:FindFirstChildOfClass('PlayerScripts')
+wait() -- Necessary wait because the Parent property is locked for a split moment
+local ThisScript = script -- script.Parent = x makes selene mad :Z
+ThisScript.Parent = game:GetService('Players').LocalPlayer:FindFirstChildOfClass('PlayerScripts')
 
 local ReplicatedStorage = game:GetService('ReplicatedStorage')
 local RunService = game:GetService('RunService')
@@ -30,52 +31,15 @@ local function AssertType(Object, ExpectedType, Message)
 end
 
 local ClientCaster = {}
-local DebugObject = {}
 
-local VisualizedAttachments = {}
-local TrailTransparency = NumberSequence.new({
-	NumberSequenceKeypoint.new(0, 0),
-	NumberSequenceKeypoint.new(0.5, 0),
-	NumberSequenceKeypoint.new(1, 1)
-})
-local AttachmentOffset = Vector3.new(0, 0, 0.1)
-
-function DebugObject:Disable(Attachment)
-	local SavedAttachment = VisualizedAttachments[Attachment]
-	if SavedAttachment then
-		SavedAttachment.Trail.Enabled = false
+function ClientCaster:DisableDebug()
+	for _, Trail in next, self._DebugTrails do
+		Trail.Enabled = false
 	end
 end
-function DebugObject:Visualize(CasterDebug, Attachment)
-	local SavedAttachment = VisualizedAttachments[Attachment]
-
-	if (Settings.DebugMode or CasterDebug) and not SavedAttachment then
-		local Trail = Instance.new('Trail')
-		local TrailAttachment = Instance.new('Attachment')
-
-		TrailAttachment.Name = 'DebugAttachment'
-		TrailAttachment.Position = Attachment.Position - AttachmentOffset
-
-		Trail.Color = ColorSequence.new(Settings.DebugColor)
-		Trail.LightEmission = 1
-		Trail.Transparency = TrailTransparency
-		Trail.FaceCamera = true
-		Trail.Lifetime = Settings.DebugLifetime
-
-		Trail.Attachment0 = Attachment
-		Trail.Attachment1 = TrailAttachment
-
-		Trail.Parent = TrailAttachment
-		TrailAttachment.Parent = Attachment.Parent
-
-		VisualizedAttachments[Attachment] = TrailAttachment
-	elseif SavedAttachment then
-		if not Settings.DebugMode and not CasterDebug then
-			SavedAttachment:Destroy()
-			VisualizedAttachments[Attachment] = nil
-		elseif not SavedAttachment.Trail.Enabled then
-			SavedAttachment.Trail.Enabled = true
-		end
+function ClientCaster:StartDebug()
+	for _, Trail in next, self._DebugTrails do
+		Trail.Enabled = true
 	end
 end
 
@@ -85,9 +49,15 @@ local CollisionBaseName = {
 }
 
 function ClientCaster:Start()
+	self.Disabled = false
 	ClientCast.InitiatedCasters[self] = {}
+
+	if self._Debug then
+		self:StartDebug()
+	end
 end
 function ClientCaster:Destroy()
+	self.Disabled = true
 	ClientCast.InitiatedCasters[self] = nil
 
 	for _, EventsHolder in next, self._CollidedEvents do
@@ -95,11 +65,12 @@ function ClientCaster:Destroy()
 			Event:Destroy()
 		end
 	end
-	for _, Child in next, self.Object:GetChildren() do
-		if Child:IsA('Attachment') and Child.Name == Settings.AttachmentName then
-			DebugObject:Disable(Child)
-		end
-	end
+	self:DisableDebug()
+end
+function ClientCaster:Stop()
+	self.Disabled = true
+	ClientCast.InitiatedCasters[self] = nil
+	self:DisableDebug()
 end
 function ClientCaster:__index(Index)
 	local CollisionIndex = CollisionBaseName[Index]
@@ -116,17 +87,29 @@ end
 function ClientCast.new(Object, RaycastParameters)
 	AssertType(Object, 'Instance', 'Unexpected argument #1 to \'CastObject.new\' (%s expected, got %s)')
 
+	local DebugTrails = {}
+	local DamagePoints = {}
 	local CasterObject = setmetatable({
 		RaycastParams = RaycastParameters,
 		Object = Object,
+		Disabled = true,
 
 		_CollidedEvents = {
 			Humanoid = {},
 			Any = {}
 		},
+		DamagePoints = DamagePoints,
 		_Debug = false,
-		_ToClean = {}
+		_ToClean = {},
+		_DebugTrails = DebugTrails
 	}, ClientCaster)
+
+	for _, Attachment in next, Object:GetChildren() do
+		if Attachment.ClassName == 'Attachment' and Attachment.Name == 'ClientCast-Debug' then
+			table.insert(DamagePoints, Attachment)
+			table.insert(DebugTrails, Attachment.Trail)
+		end
+	end
 
 	return CasterObject
 end
@@ -162,19 +145,16 @@ local function UpdateCasterEvents(RaycastResult)
 	end
 end
 local function UpdateAttachment(Attachment, Caster, LastPositions)
-	if Caster and Caster.Object and Attachment.ClassName == 'Attachment' and Attachment.Name == Settings.AttachmentName then
-		local CurrentPosition = Attachment.WorldPosition
-		local LastPosition = LastPositions[Attachment] or CurrentPosition
+	local CurrentPosition = Attachment.WorldPosition
+	local LastPosition = LastPositions[Attachment] or CurrentPosition
 
-		if CurrentPosition ~= LastPosition then
-			local RaycastResult = workspace:Raycast(CurrentPosition, CurrentPosition - LastPosition, Caster.RaycastParams)
+	if CurrentPosition ~= LastPosition then
+		local RaycastResult = workspace:Raycast(CurrentPosition, CurrentPosition - LastPosition, Caster.RaycastParams)
 
-			UpdateCasterEvents(RaycastResult)
-			DebugObject:Visualize(Caster._Debug, Attachment)
-		end
-
-		LastPositions[Attachment] = CurrentPosition
+		UpdateCasterEvents(RaycastResult)
 	end
+
+	LastPositions[Attachment] = CurrentPosition
 end
 
 local ClientCasters = {}
@@ -185,24 +165,32 @@ RunService.Heartbeat:Connect(function()
 			continue
 		end
 
-		for _, Attachment in next, Object:GetChildren() do
+		for _, Attachment in next, Caster.DamagePoints do
 			UpdateAttachment(Attachment, Caster, LastPositions)
 		end
 	end
 end)
 
 ReplicationRemote.OnClientEvent:Connect(function(Status, Data)
-	if Status == 'Connect' then
-		local Caster = ClientCast.new(Data.Object, DeserializeParams(Data.RaycastParams))
-		ClientCasters[Data.Id] = Caster
-		Caster._Debug = Data.Debug
+	if Status == 'Start' then
+		local Caster = ClientCasters[Data.Id]
+		if not Caster then
+			Caster = ClientCast.new(Data.Object, DeserializeParams(Data.RaycastParams))
+			ClientCasters[Data.Id] = Caster
+			Caster._Debug = Data.Debug
+		end
 		Caster:Start()
-	elseif Status == 'Disconnect' then
+	elseif Status == 'Destroy' then
 		local Caster = ClientCasters[Data.Id]
 		if Caster then
 			Caster:Destroy()
 			Caster = nil
 			ClientCasters[Data.Id] = nil
+		end
+	elseif Status == 'Stop' then
+		local Caster = ClientCasters[Data.Id]
+		if Caster then
+			Caster:Stop()
 		end
 	end
 end)
