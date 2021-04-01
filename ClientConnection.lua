@@ -16,7 +16,6 @@ return function()
 
 	local function CloneHandler(Parent)
 		local ClonedHandler = ClientHandler:Clone()
-		ScriptsHolder.Janitor:Clone().Parent = ClonedHandler
 		ScriptsHolder.Signal:Clone().Parent = ClonedHandler
 		ScriptsHolder.RBXWait:Clone().Parent = ClonedHandler
 
