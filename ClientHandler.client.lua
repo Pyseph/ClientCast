@@ -21,10 +21,9 @@ local Settings = {
 ClientCast.Settings = Settings
 ClientCast.InitiatedCasters = {}
 
-local Janitor = require(script.Janitor)
 local Signal = require(script.Signal)
 
-function AssertType(Object, ExpectedType, Message)
+local function AssertType(Object, ExpectedType, Message)
 	if typeof(Object) ~= ExpectedType then
 		error(string.format(Message, ExpectedType, typeof(Object)), 3)
 	end
@@ -101,11 +100,6 @@ function ClientCaster:Destroy()
 			DebugObject:Disable(Child)
 		end
 	end
-
-	self._Janitor:Destroy()
-end
-function ClientCaster:Stop()
-	ClientCast.InitiatedCasters[self] = nil
 end
 function ClientCaster:__index(Index)
 	local CollisionIndex = CollisionBaseName[Index]
@@ -122,7 +116,6 @@ end
 function ClientCast.new(Object, RaycastParameters)
 	AssertType(Object, 'Instance', 'Unexpected argument #1 to \'CastObject.new\' (%s expected, got %s)')
 
-	local JanitorObject = Janitor.new()
 	local CasterObject = setmetatable({
 		RaycastParams = RaycastParameters,
 		Object = Object,
@@ -132,15 +125,13 @@ function ClientCast.new(Object, RaycastParameters)
 			Any = {}
 		},
 		_Debug = false,
-		_ToClean = {},
-		_Janitor = JanitorObject
+		_ToClean = {}
 	}, ClientCaster)
 
-	JanitorObject:Add(CasterObject)
 	return CasterObject
 end
 
-function SerializeResult(Result)
+local function SerializeResult(Result)
 	return {
 		Instance = Result.Instance,
 		Position = Result.Position,
@@ -148,7 +139,7 @@ function SerializeResult(Result)
 		Normal = Result.Normal
 	}
 end
-function DeserializeParams(Input)
+local function DeserializeParams(Input)
 	local Params = RaycastParams.new()
 	for Key, Value in next, Input do
 		if Key == 'FilterType' then
@@ -159,7 +150,7 @@ function DeserializeParams(Input)
 
 	return Params
 end
-function UpdateCasterEvents(RaycastResult)
+local function UpdateCasterEvents(RaycastResult)
 	if RaycastResult then
 		ReplicationRemote:FireServer('Any', SerializeResult(RaycastResult))
 
@@ -170,7 +161,7 @@ function UpdateCasterEvents(RaycastResult)
 		end
 	end
 end
-function UpdateAttachment(Attachment, Caster, LastPositions)
+local function UpdateAttachment(Attachment, Caster, LastPositions)
 	if Caster and Caster.Object and Attachment.ClassName == 'Attachment' and Attachment.Name == Settings.AttachmentName then
 		local CurrentPosition = Attachment.WorldPosition
 		local LastPosition = LastPositions[Attachment] or CurrentPosition
@@ -204,6 +195,7 @@ ReplicationRemote.OnClientEvent:Connect(function(Status, Data)
 	if Status == 'Connect' then
 		local Caster = ClientCast.new(Data.Object, DeserializeParams(Data.RaycastParams))
 		ClientCasters[Data.Id] = Caster
+		Caster._Debug = Data.Debug
 		Caster:Start()
 	elseif Status == 'Disconnect' then
 		local Caster = ClientCasters[Data.Id]

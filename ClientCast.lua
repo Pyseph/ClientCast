@@ -23,11 +23,10 @@ local ReplicatedStorage = game:GetService('ReplicatedStorage')
 local ReplicationRemote = ReplicatedStorage:FindFirstChild('ClientCast-Replication')
 local PingRemote = ReplicatedStorage:FindFirstChild('ClientCast-Ping')
 
-local Janitor = require(ScriptsHolder.Janitor)
 local Signal = require(ScriptsHolder.Signal)
 local Wait = require(ScriptsHolder.RBXWait)
 
-function SafeRemoteInvoke(RemoteFunction, Player, MaxYield)
+local function SafeRemoteInvoke(RemoteFunction, Player, MaxYield)
 	local ThreadResumed = false
 	local Thread = coroutine.running()
 
@@ -35,21 +34,23 @@ function SafeRemoteInvoke(RemoteFunction, Player, MaxYield)
 		local TimestampStart = time()
 		RemoteFunction:InvokeClient(Player)
 		local TimestampEnd = time()
+
 		ThreadResumed = true
 		coroutine.resume(Thread, math.min(TimestampEnd - TimestampStart, MaxYield))
 	end)()
 
 	coroutine.wrap(function()
-		Wait(MaxYield)
+		Wait(MaxYield * 2)
 		if not ThreadResumed then
 			ThreadResumed = true
 			coroutine.resume(Thread, MaxYield)
 		end
 	end)()
-	return coroutine.yield()
+	-- Divide by 2 because this is a two-way trip: server → client → server
+	return coroutine.yield() / 2
 end
 
-function SerializeParams(Params)
+local function SerializeParams(Params)
 	return {
 		FilterDescendantsInstances = Params.FilterDescendantsInstances,
 		FilterType = Params.FilterType.Name,
@@ -57,10 +58,34 @@ function SerializeParams(Params)
 		CollisionGroup = Params.CollisionGroup
 	}
 end
-function IsA(Object, Type)
+local function IsA(Object, Type)
 	return typeof(Object) == Type
 end
-function IsValid(SerializedResult)
+local function AssertType(Object, ExpectedType, Message)
+	if not IsA(Object, ExpectedType) then
+		error(string.format(Message, ExpectedType, typeof(Object)), 4)
+	end
+end
+local function AssertClass(Object, ExpectedClass, Message)
+	AssertType(Object, 'Instance', Message)
+	if not Object:IsA(ExpectedClass) then
+		error(string.format(Message, ExpectedClass, Object.Class), 4)
+	end
+end
+local function AssertNaN(Object, Message)
+	if Object ~= Object then
+		error(string.format(Message, 'number', typeof(Object)), 4)
+	end
+end
+local function IsValidOwner(Value)
+	local IsInstance = IsA(Value, 'Instance')
+	if not IsInstance and Value ~= nil then
+		error('Unable to cast value to Object', 4)
+	elseif IsInstance and not Value:IsA('Player') then
+		error('SetOwner only takes player or \'nil\' instance as an argument.', 4)
+	end
+end
+local function IsValid(SerializedResult)
 	if not IsA(SerializedResult, 'table') then
 		return false
 	end
@@ -76,36 +101,43 @@ local ReplicationBase = {}
 ReplicationBase.__index = ReplicationBase
 
 function ReplicationBase:Connect()
-	if IsA(self.Owner, 'Instance') and self.Owner:IsA('Player') then
-		ReplicationRemote:FireClient(self.Owner, 'Connect', {
-			Owner = self.Owner,
-			Object = self.Object,
-			RaycastParams = SerializeParams(self.RaycastParams),
-			Id = self.Caster._UniqueId
-		})
-		self.Connected = true
-		self.Connection = ReplicationRemote.OnServerEvent:Connect(function(Player, Code, RaycastResult, Humanoid)
-			if Player == self.Owner and IsValid(RaycastResult) and (Code == 'Any' or Code == 'Humanoid') then
-				Humanoid = Code == 'Humanoid' and Humanoid or nil
-				for Event in next, self.Caster._CollidedEvents[Code] do
-					Event:Invoke(RaycastResult, Humanoid)
-				end
+	local Owner = self.Owner
+	AssertClass(Owner, 'Player')
+
+	ReplicationRemote:FireClient(Owner, 'Connect', {
+		Owner = Owner,
+		Object = self.Object,
+		Debug = self.Caster._Debug,
+		RaycastParams = SerializeParams(self.RaycastParams),
+		Id = self.Caster._UniqueId
+	})
+
+	self.Connected = true
+	self.Connection = ReplicationRemote.OnServerEvent:Connect(function(Player, Code, RaycastResult, Humanoid)
+		if Player == Owner and IsValid(RaycastResult) and (Code == 'Any' or Code == 'Humanoid') then
+			Humanoid = Code == 'Humanoid' and Humanoid or nil
+			for Event in next, self.Caster._CollidedEvents[Code] do
+				Event:Invoke(RaycastResult, Humanoid)
 			end
-		end)
-	end
+		end
+	end)
 end
 function ReplicationBase:Disconnect()
-	if IsA(self.Owner, 'Instance') and self.Owner:IsA('Player') then
-		ReplicationRemote:FireClient(self.Owner, 'Disconnect', {
-			Owner = self.Owner,
+	local Owner = self.Owner
+	if AssertClass(Owner, 'Player') then
+		ReplicationRemote:FireClient(Owner, 'Disconnect', {
+			Owner = Owner,
 			Object = self.Object,
 			Id = self.Caster._UniqueId
 		})
 	end
+
 	self.Connected = false
-	if self.Connection then
-		self.Connection:Disconnect()
-		self.Connection = nil
+
+	local ReplicationConn = self.Connection
+	if ReplicationConn then
+		ReplicationConn:Disconnect()
+		ReplicationConn = nil
 	end
 end
 function ReplicationBase:Destroy()
@@ -120,31 +152,6 @@ function Replication.new(Player, Object, RaycastParameters, Caster)
 		Connected = false,
 		Caster = Caster
 	}, ReplicationBase)
-end
-
-function AssertType(Object, ExpectedType, Message)
-	if not IsA(Object, ExpectedType) then
-		error(string.format(Message, ExpectedType, typeof(Object)), 4)
-	end
-end
-function AssertClass(Object, ExpectedClass, Message)
-	AssertType(Object, 'Instance', Message)
-	if not Object:IsA(ExpectedClass) then
-		error(string.format(Message, ExpectedClass, Object.Class), 4)
-	end
-end
-function AssertNaN(Object, Message)
-	if Object ~= Object then
-		error(string.format(Message, 'number', typeof(Object)), 4)
-	end
-end
-function IsValidOwner(Value)
-	local IsInstance = IsA(Value, 'Instance')
-	if not IsInstance and Value ~= nil then
-		error('Unable to cast value to Object', 4)
-	elseif IsInstance and not Value:IsA('Player') then
-		error('SetOwner only takes player or \'nil\' instance as an argument.', 4)
-	end
 end
 
 local ClientCaster = {}
@@ -190,8 +197,11 @@ function DebugObject:Visualize(CasterDebug, Attachment)
 		if not Settings.DebugMode and not CasterDebug then
 			SavedAttachment:Destroy()
 			VisualizedAttachments[Attachment] = nil
-		elseif not SavedAttachment.Trail.Enabled then
-			SavedAttachment.Trail.Enabled = true
+		else
+			local Trail = SavedAttachment:FindFirstChild('Trail')
+			if Trail and not Trail.Enabled then
+				SavedAttachment.Trail.Enabled = true
+			end
 		end
 	end
 end
@@ -202,20 +212,26 @@ local CollisionBaseName = {
 }
 
 function ClientCaster:Start()
-	if self._ReplicationConnection and not self._ReplicationConnection.Connected then
-		self._ReplicationConnection:Connect()
+	self.Disabled = false
+
+	local ReplicationConn = self._ReplicationConnection
+	if ReplicationConn and not ReplicationConn.Connected then
+		ReplicationConn:Connect()
 	end
+
 	ClientCast.InitiatedCasters[self] = {}
 end
 function ClientCaster:Destroy()
-	if self._ReplicationConnection then
-		self._ReplicationConnection:Destroy()
+	local ReplicationConn = self._ReplicationConnection
+	if ReplicationConn then
+		ReplicationConn:Destroy()
 	end
+
 	ClientCast.InitiatedCasters[self] = nil
+
 	self.RaycastParams = nil
 	self.Object = nil
-
-	self._Janitor:Destroy()
+	self.Disabled = true
 end
 function ClientCaster:Stop()
 	local OldConn = self._ReplicationConnection
@@ -224,6 +240,7 @@ function ClientCaster:Stop()
 	end
 
 	ClientCast.InitiatedCasters[self] = nil
+	self.Disabled = true
 end
 function ClientCaster:SetOwner(NewOwner)
 	IsValidOwner(NewOwner)
@@ -239,11 +256,6 @@ function ClientCaster:SetOwner(NewOwner)
 	if ClientCast.InitiatedCasters[self] then
 		if NewOwner ~= nil and ReplConn then
 			ReplConn:Connect()
-		end
-	end
-	for _, Attachment in next, self.Object:GetChildren() do
-		if Attachment.ClassName == 'Attachment' and Attachment.Name == Settings.AttachmentName then
-			DebugObject:Disable(Attachment)
 		end
 	end
 end
@@ -305,7 +317,7 @@ function ClientCaster:__index(Index)
 end
 
 local UniqueId = 0
-function GenerateId()
+local function GenerateId()
 	UniqueId += 1
 	return UniqueId
 end
@@ -314,30 +326,27 @@ function ClientCast.new(Object, RaycastParameters, NetworkOwner)
 	AssertType(Object, 'Instance', 'Unexpected argument #2 to \'CastObject.new\' (%s expected, got %s)')
 	AssertType(RaycastParameters, 'RaycastParams', 'Unexpected argument #3 to \'CastObject.new\' (%s expected, got %s)')
 
-	local JanitorObject = Janitor.new()
 	local CasterObject = setmetatable({
 		RaycastParams = RaycastParameters,
 		Object = Object,
 		Owner = NetworkOwner,
+		Disabled = true,
 
 		_CollidedEvents = {
 			Humanoid = {},
 			Any = {}
 		},
 		_ToClean = {},
-		_Janitor = JanitorObject,
 		_ReplicationConnection = false,
-		_Debug = false,
+		_Debug = Settings.DebugMode,
 		_ExhaustionTime = 1,
 		_UniqueId = GenerateId()
 	}, ClientCaster)
 	CasterObject._ReplicationConnection = NetworkOwner ~= nil and Replication.new(NetworkOwner, Object, RaycastParameters, CasterObject)
-
-	JanitorObject:Add(CasterObject)
 	return CasterObject
 end
 
-function UpdateCasterEvents(Caster, RaycastResult)
+local function UpdateCasterEvents(Caster, RaycastResult)
 	if RaycastResult then
 		for CollisionEvent in next, Caster._CollidedEvents.Any do
 			CollisionEvent:Invoke(RaycastResult)
@@ -352,7 +361,7 @@ function UpdateCasterEvents(Caster, RaycastResult)
 		end
 	end
 end
-function UpdateAttachment(Attachment, Caster, LastPositions)
+local function UpdateAttachment(Attachment, Caster, LastPositions)
 	if Attachment.ClassName == 'Attachment' and Attachment.Name == Settings.AttachmentName then
 		local CurrentPosition = Attachment.WorldPosition
 		local LastPosition = LastPositions[Attachment] or CurrentPosition

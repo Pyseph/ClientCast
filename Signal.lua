@@ -1,66 +1,53 @@
-local Janitor = require(script.Parent.Janitor)
-
 local Connection = {}
+local Signal = {}
 
-local ConnectionBase = {}
-local InvokedBase = {}
-ConnectionBase.__index = ConnectionBase
-InvokedBase.__index = InvokedBase
+Connection.__index = Connection
+Signal.__index = Signal
 
-
-
-function ConnectionBase:Invoke(...)
-	for _, Data in next, self.Listeners do
-		coroutine.wrap(Data.Callback)(...)
-	end
-	for Index, YieldedThread in next, self.Yielded do
-		self.Yielded[Index] = nil
-		coroutine.resume(YieldedThread, ...)
-	end
-end
-function ConnectionBase:Destroy()
-	self._Janitor:Destroy()
+function Connection.new(ConnectingSignal)
+    return setmetatable({
+        Signal = ConnectingSignal,
+        Connected = true
+    }, Connection)
 end
 
-
-
-function InvokedBase:Connect(f)
-	local ConnectionReference = self._Reference
-	local Timestamp = os.clock()
-	local Data = {
-		Disconnect = function(self)
-			self.Connected = false
-			ConnectionReference.Listeners[Timestamp] = nil
-		end,
-		Callback = f,
-		Connected = true
-	}
-	Data.Destroy = Data.Disconnect
-
-	ConnectionReference._Janitor:Add(Data)
-	ConnectionReference.Listeners[Timestamp] = Data
-	return Data
+function Connection:Disconnect()
+    self.Signal._Connections[self] = nil
+    self.Connected = false
 end
-function InvokedBase:Wait()
-	local ConnectionReference = self._Reference
-	local Thread = coroutine.running()
+Connection.Destroy = Connection.Disconnect
 
-	table.insert(ConnectionReference.Yielded, Thread)
-	return coroutine.yield()
-end
+function Signal.new()
+    local Invoked = {}
+    local SignalObj = setmetatable({
+        _Connections = {},
+        Invoked = Invoked
+    }, Signal)
 
+    function Invoked:Wait()
+        local CurrentThread, YieldConnection = coroutine.running(), nil
+        YieldConnection = SignalObj:Connect(function(...)
+            YieldConnection:Disconnect()
+            coroutine.resume(CurrentThread, ...)
+        end)
+        return coroutine.yield()
+    end
+    function Invoked:Connect(Callback)
+        local CreatedConnection = Connection.new(SignalObj)
+        SignalObj._Connections[CreatedConnection] = Callback
+        return CreatedConnection
+    end
 
-
-function Connection.new()
-	local ConnectionObject = setmetatable({
-		Listeners = {},
-		Invoked = setmetatable({_Reference = false}, InvokedBase),
-		Yielded = {},
-		_Janitor = Janitor.new()
-	}, ConnectionBase)
-	ConnectionObject.Invoked._Reference = ConnectionObject
-
-	return ConnectionObject
+    return SignalObj
 end
 
-return Connection
+function Signal:Invoke(...)
+    for _, Callback in next, self._Connections do
+        coroutine.resume(coroutine.create(Callback), ...)
+    end
+end
+
+local Invoked = {}
+Signal.Invoked = Invoked
+
+return Signal
