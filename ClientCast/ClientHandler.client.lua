@@ -13,6 +13,7 @@ PingRemote.OnClientInvoke = function() end
 local ClientCast = {}
 local Settings = {
 	AttachmentName = 'DmgPoint', -- The name of the attachment that this network will raycast from
+	DebugAttachmentName = 'ClientCast-Debug', -- The name of the debug trail attachment
 
 	DebugMode = true, -- DebugMode visualizes the rays, from last to current position
 	DebugColor = Color3.new(1, 0, 0), -- The color of the visualized ray
@@ -21,6 +22,13 @@ local Settings = {
 
 ClientCast.Settings = Settings
 ClientCast.InitiatedCasters = {}
+
+local TrailTransparency = NumberSequence.new({
+	NumberSequenceKeypoint.new(0, 0),
+	NumberSequenceKeypoint.new(0.5, 0),
+	NumberSequenceKeypoint.new(1, 1)
+})
+local AttachmentOffset = Vector3.new(0, 0, 0.1)
 
 local Signal = require(script.Signal)
 
@@ -56,16 +64,40 @@ function ClientCaster:Start()
 		self:StartDebug()
 	end
 end
+function ClientCaster:SetObject(Object)
+	self.Object = Object
+
+	for _, DebugTrail in next, self._DebugTrails do
+		DebugTrail.Parent:Destroy()
+	end
+	table.clear(self._DebugTrails)
+	table.clear(self._DamagePoints)
+
+	local OldConnection = self._DescendantConnection
+	if OldConnection then
+		OldConnection:Disconnect()
+	end
+
+	for _, Descendant in next, Object:GetDescendants() do
+		self._OnDamagePointAdded(Descendant)
+	end
+
+	self._DescendantConnection = Object.DescendantAdded:Connect(self._OnDamagePointAdded)
+end
 function ClientCaster:Destroy()
 	self.Disabled = true
 	ClientCast.InitiatedCasters[self] = nil
+
+	self._DescendantConnection:Disconnect()
 
 	for _, EventsHolder in next, self._CollidedEvents do
 		for Event in next, EventsHolder do
 			Event:Destroy()
 		end
 	end
-	self:DisableDebug()
+	for _, DebugTrail in next, self._DebugTrails do
+		DebugTrail.Parent:Destroy()
+	end
 end
 function ClientCaster:Stop()
 	self.Disabled = true
@@ -86,31 +118,65 @@ end
 
 function ClientCast.new(Object, RaycastParameters)
 	AssertType(Object, 'Instance', 'Unexpected argument #1 to \'CastObject.new\' (%s expected, got %s)')
+	local CasterObject
 
 	local DebugTrails = {}
 	local DamagePoints = {}
-	local CasterObject = setmetatable({
+
+	local function OnDamagePointAdded(Attachment)
+		if Attachment.ClassName == 'Attachment' then
+			if Attachment.Name == Settings.AttachmentName then
+				local DirectChild = Attachment.Parent == CasterObject.Object
+				table.insert(DamagePoints, {
+					Attachment = Attachment,
+					DirectChild = DirectChild
+				})
+
+				local Trail = Instance.new('Trail')
+				local TrailAttachment = Instance.new('Attachment')
+
+				TrailAttachment.Name = Settings.DebugAttachmentName
+				TrailAttachment.Position = Attachment.Position - AttachmentOffset
+
+				Trail.Color = ColorSequence.new(Settings.DebugColor)
+				Trail.Enabled = CasterObject._Debug and (DirectChild or CasterObject.Recursive)
+				Trail.LightEmission = 1
+				Trail.Transparency = TrailTransparency
+				Trail.FaceCamera = true
+				Trail.Lifetime = Settings.DebugLifetime
+
+				Trail.Attachment0 = Attachment
+				Trail.Attachment1 = TrailAttachment
+
+				Trail.Parent = TrailAttachment
+				TrailAttachment.Parent = Attachment.Parent
+
+				table.insert(DebugTrails, Trail)
+			end
+		end
+	end
+	CasterObject = setmetatable({
 		RaycastParams = RaycastParameters,
 		Object = Object,
 		Disabled = true,
+		Recursive = false,
 
 		_CollidedEvents = {
 			Humanoid = {},
 			Any = {}
 		},
-		DamagePoints = DamagePoints,
+		_DamagePoints = DamagePoints,
 		_Debug = false,
 		_ToClean = {},
-		_DebugTrails = DebugTrails
+		_DebugTrails = DebugTrails,
+		_OnDamagePointAdded = OnDamagePointAdded
 	}, ClientCaster)
 
-	for _, Attachment in next, Object:GetChildren() do
-		if Attachment.ClassName == 'Attachment' and Attachment.Name == 'ClientCast-Debug' then
-			table.insert(DamagePoints, Attachment)
-			table.insert(DebugTrails, Attachment.Trail)
-		end
+	for _, Descendant in next, Object:GetDescendants() do
+		OnDamagePointAdded(Descendant)
 	end
 
+	CasterObject._DescendantConnection = Object.DescendantAdded:Connect(OnDamagePointAdded)
 	return CasterObject
 end
 
@@ -165,32 +231,52 @@ RunService.Heartbeat:Connect(function()
 			continue
 		end
 
-		for _, Attachment in next, Caster.DamagePoints do
-			UpdateAttachment(Attachment, Caster, LastPositions)
+		for _, Data in next, Caster._DamagePoints do
+			if Caster.Recursive or Data.DirectChild then
+				UpdateAttachment(Data.Attachment, Caster, LastPositions)
+			end
 		end
 	end
 end)
 
-ReplicationRemote.OnClientEvent:Connect(function(Status, Data)
+ReplicationRemote.OnClientEvent:Connect(function(Status, Data, AdditionalData)
 	if Status == 'Start' then
 		local Caster = ClientCasters[Data.Id]
+
 		if not Caster then
 			Caster = ClientCast.new(Data.Object, DeserializeParams(Data.RaycastParams))
+
 			ClientCasters[Data.Id] = Caster
 			Caster._Debug = Data.Debug
 		end
 		Caster:Start()
+
 	elseif Status == 'Destroy' then
 		local Caster = ClientCasters[Data.Id]
+
 		if Caster then
 			Caster:Destroy()
 			Caster = nil
 			ClientCasters[Data.Id] = nil
 		end
+
 	elseif Status == 'Stop' then
 		local Caster = ClientCasters[Data.Id]
+
 		if Caster then
 			Caster:Stop()
+		end
+	elseif Status == 'Update' then
+		local Caster = ClientCasters[Data.Id]
+
+		if Caster then
+			for Name, Value in next, AdditionalData do
+				if Name == 'Object' then
+					Caster:SetObject(Value)
+				else
+					Caster[Name] = Value
+				end
+			end
 		end
 	end
 end)
