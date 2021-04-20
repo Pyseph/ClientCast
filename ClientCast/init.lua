@@ -4,7 +4,7 @@ local Settings = {
 	DebugAttachmentName = 'ClientCast-Debug', -- The name of the debug trail attachment
 
 	FunctionDebug = false,
-	DebugMode = true, -- DebugMode visualizes the rays, from last to current position
+	DebugMode = false, -- DebugMode visualizes the rays, from last to current position
 	DebugColor = Color3.new(1, 0, 0), -- The color of the visualized ray
 	DebugLifetime = 1, -- Lifetime of the visualized trail
 	AutoSetup = true -- Automatically creates a LocalScript and a RemoteEvent to establish a connection to the server, from the client.
@@ -133,7 +133,6 @@ function ReplicationBase:Update(AdditionalData)
 end
 function ReplicationBase:Stop(Destroy)
 	local Owner = self.Owner
-	AssertClass(Owner, 'Player')
 
 	ReplicationRemote:FireClient(Owner, Destroy and 'Destroy' or 'Stop', {
 		Owner = Owner,
@@ -153,6 +152,8 @@ function ReplicationBase:Destroy()
 end
 
 function Replication.new(Player, Object, RaycastParameters, Caster)
+	AssertClass(Player, 'Player', 'Unexpected owner in \'ReplicationBase.Stop\' (%s expected, got %s)')
+
 	return setmetatable({
 		Owner = Player,
 		Object = Object,
@@ -247,7 +248,7 @@ function ClientCaster:SetOwner(NewOwner)
 
 	if ClientCast.InitiatedCasters[self] then
 		if NewOwner ~= nil and ReplConn then
-			ReplConn:Connect()
+			ReplConn:Start()
 		end
 	end
 end
@@ -308,7 +309,13 @@ function ClientCaster:GetObject()
 end
 function ClientCaster:EditRaycastParams(RaycastParameters)
 	self.RaycastParams = RaycastParameters
-	ClientCaster:SetOwner(self.Owner)
+
+	local ReplicationConnection = self._ReplicationConnection
+	if ReplicationConnection then
+		ReplicationConnection:Update({
+			RaycastParams = RaycastParameters
+		})
+	end
 end
 function ClientCaster:SetRecursive(Bool)
 	AssertType(Bool, 'boolean', 'Unexpected argument #1 to \'ClientCaster.SetRecursive\' (%s expected, got %s)')
@@ -396,7 +403,8 @@ function ClientCast.new(Object, RaycastParameters, NetworkOwner)
 		_UniqueId = GenerateId(),
 		_DamagePoints = DamagePoints,
 		_DebugTrails = DebugTrails,
-		_OnDamagePointAdded = OnDamagePointAdded
+		_OnDamagePointAdded = OnDamagePointAdded,
+		_Class = 'Caster'
 	}, ClientCaster)
 
 	for _, Descendant in next, Object:GetDescendants() do

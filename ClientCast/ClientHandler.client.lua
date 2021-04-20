@@ -15,7 +15,7 @@ local Settings = {
 	AttachmentName = 'DmgPoint', -- The name of the attachment that this network will raycast from
 	DebugAttachmentName = 'ClientCast-Debug', -- The name of the debug trail attachment
 
-	DebugMode = true, -- DebugMode visualizes the rays, from last to current position
+	DebugMode = false, -- DebugMode visualizes the rays, from last to current position
 	DebugColor = Color3.new(1, 0, 0), -- The color of the visualized ray
 	DebugLifetime = 1, -- Lifetime of the visualized trail
 }
