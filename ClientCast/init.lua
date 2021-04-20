@@ -143,8 +143,12 @@ function ReplicationBase:Stop(Destroy)
 	local ReplicationConn = self.Connection
 	if ReplicationConn then
 		ReplicationConn:Disconnect()
-		table.clear(self)
 		ReplicationConn = nil
+	end
+
+	if Destroy then
+		table.clear(self)
+		setmetatable(self, nil)
 	end
 end
 function ReplicationBase:Destroy()
@@ -153,6 +157,7 @@ end
 
 function Replication.new(Player, Object, RaycastParameters, Caster)
 	AssertClass(Player, 'Player', 'Unexpected owner in \'ReplicationBase.Stop\' (%s expected, got %s)')
+	assert(type(Caster) == 'table' and Caster._Class == 'Caster', 'Unexpect argument #4 - Caster expected')
 
 	return setmetatable({
 		Owner = Player,
@@ -172,12 +177,30 @@ local TrailTransparency = NumberSequence.new({
 local AttachmentOffset = Vector3.new(0, 0, 0.1)
 
 function ClientCaster:DisableDebug()
-	for _, Trail in next, self._DebugTrails do
+	local ReplicationConnection = self._ReplicationConnection
+
+	if ReplicationConnection then
+		ReplicationConnection:Update({
+			Debug = false
+		})
+	end
+
+	self._Debug = false
+	for Trail in next, self._DebugTrails do
 		Trail.Enabled = false
 	end
 end
 function ClientCaster:StartDebug()
-	for _, Trail in next, self._DebugTrails do
+	local ReplicationConnection = self._ReplicationConnection
+
+	if ReplicationConnection then
+		ReplicationConnection:Update({
+			Debug = true
+		})
+	end
+
+	self._Debug = true
+	for Trail in next, self._DebugTrails do
 		Trail.Enabled = true
 	end
 end
@@ -356,33 +379,41 @@ function ClientCast.new(Object, RaycastParameters, NetworkOwner)
 	local DamagePoints = {}
 
 	local function OnDamagePointAdded(Attachment)
-		if Attachment.ClassName == 'Attachment' and Attachment.Name == Settings.AttachmentName then
+		if Attachment.ClassName == 'Attachment' and Attachment.Name == Settings.AttachmentName and not DamagePoints[Attachment] then
 			local DirectChild = Attachment.Parent == CasterObject.Object
-			table.insert(DamagePoints, {
-				Attachment = Attachment,
-				DirectChild = DirectChild
-			})
+			DamagePoints[Attachment] = DirectChild
 
-			local Trail = Instance.new('Trail')
-			local TrailAttachment = Instance.new('Attachment')
+			if CasterObject.Owner == nil then
+				local Trail = Instance.new('Trail')
+				local TrailAttachment = Instance.new('Attachment')
 
-			TrailAttachment.Name = Settings.DebugAttachmentName
-			TrailAttachment.Position = Attachment.Position - AttachmentOffset
+				TrailAttachment.Name = Settings.DebugAttachmentName
+				TrailAttachment.Position = Attachment.Position - AttachmentOffset
 
-			Trail.Color = ColorSequence.new(Settings.DebugColor)
-			Trail.Enabled = CasterObject._Debug and (DirectChild or CasterObject.Recursive)
-			Trail.LightEmission = 1
-			Trail.Transparency = TrailTransparency
-			Trail.FaceCamera = true
-			Trail.Lifetime = Settings.DebugLifetime
+				Trail.Color = ColorSequence.new(Settings.DebugColor)
+				Trail.Enabled = CasterObject._Debug and (DirectChild or CasterObject.Recursive)
+				Trail.LightEmission = 1
+				Trail.Transparency = TrailTransparency
+				Trail.FaceCamera = true
+				Trail.Lifetime = Settings.DebugLifetime
 
-			Trail.Attachment0 = Attachment
-			Trail.Attachment1 = TrailAttachment
+				Trail.Attachment0 = Attachment
+				Trail.Attachment1 = TrailAttachment
 
-			Trail.Parent = TrailAttachment
-			TrailAttachment.Parent = Attachment.Parent
+				Trail.Parent = TrailAttachment
+				TrailAttachment.Parent = Attachment.Parent
 
-			table.insert(DebugTrails, Trail)
+				coroutine.wrap(function()
+					repeat
+						Attachment.AncestryChanged:Wait()
+					until not Attachment:IsDescendantOf(CasterObject.Object)
+
+					TrailAttachment:Destroy()
+					DebugTrails[Trail] = nil
+					DamagePoints[Attachment] = nil
+				end)()
+				DebugTrails[Trail] = TrailAttachment
+			end
 		end
 	end
 	CasterObject = setmetatable({
@@ -448,9 +479,11 @@ RunService.Heartbeat:Connect(function()
 		local CasterObject = Caster.Object
 
 		if Caster.Owner == nil and CasterObject then
-			for _, Data in next, Caster._DamagePoints do
-				if Caster.Recursive or Data.DirectChild then
-					UpdateAttachment(Data.Attachment, Caster, LastPositions)
+			local RecursiveCaster = Caster.Recursive
+
+			for Attachment, DirectChild in next, Caster._DamagePoints do
+				if DirectChild or RecursiveCaster then
+					UpdateAttachment(Attachment, Caster, LastPositions)
 				end
 			end
 		end

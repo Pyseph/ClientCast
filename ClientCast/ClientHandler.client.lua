@@ -41,12 +41,14 @@ end
 local ClientCaster = {}
 
 function ClientCaster:DisableDebug()
-	for _, Trail in next, self._DebugTrails do
+	self._Debug = false
+	for Trail in next, self._DebugTrails do
 		Trail.Enabled = false
 	end
 end
 function ClientCaster:StartDebug()
-	for _, Trail in next, self._DebugTrails do
+	self._Debug = true
+	for Trail in next, self._DebugTrails do
 		Trail.Enabled = true
 	end
 end
@@ -67,8 +69,8 @@ end
 function ClientCaster:SetObject(Object)
 	self.Object = Object
 
-	for _, DebugTrail in next, self._DebugTrails do
-		DebugTrail.Parent:Destroy()
+	for _, DebugAttachment in next, self._DebugTrails do
+		DebugAttachment:Destroy()
 	end
 	table.clear(self._DebugTrails)
 	table.clear(self._DamagePoints)
@@ -102,6 +104,13 @@ end
 function ClientCaster:Stop()
 	self.Disabled = true
 	ClientCast.InitiatedCasters[self] = nil
+
+	local DescendantConnection = self._DescendantConnection
+	if DescendantConnection then
+		DescendantConnection:Disconnect()
+		self._DescendantConnection = nil
+	end
+
 	self:DisableDebug()
 end
 function ClientCaster:__index(Index)
@@ -124,35 +133,39 @@ function ClientCast.new(Object, RaycastParameters)
 	local DamagePoints = {}
 
 	local function OnDamagePointAdded(Attachment)
-		if Attachment.ClassName == 'Attachment' then
-			if Attachment.Name == Settings.AttachmentName then
-				local DirectChild = Attachment.Parent == CasterObject.Object
-				table.insert(DamagePoints, {
-					Attachment = Attachment,
-					DirectChild = DirectChild
-				})
+		if Attachment.ClassName == 'Attachment' and Attachment.Name == Settings.AttachmentName and not DamagePoints[Attachment] then
+			local DirectChild = Attachment.Parent == CasterObject.Object
+			DamagePoints[Attachment] = DirectChild
 
-				local Trail = Instance.new('Trail')
-				local TrailAttachment = Instance.new('Attachment')
+			local Trail = Instance.new('Trail')
+			local TrailAttachment = Instance.new('Attachment')
 
-				TrailAttachment.Name = Settings.DebugAttachmentName
-				TrailAttachment.Position = Attachment.Position - AttachmentOffset
+			TrailAttachment.Name = Settings.DebugAttachmentName
+			TrailAttachment.Position = Attachment.Position - AttachmentOffset
 
-				Trail.Color = ColorSequence.new(Settings.DebugColor)
-				Trail.Enabled = CasterObject._Debug and (DirectChild or CasterObject.Recursive)
-				Trail.LightEmission = 1
-				Trail.Transparency = TrailTransparency
-				Trail.FaceCamera = true
-				Trail.Lifetime = Settings.DebugLifetime
+			Trail.Color = ColorSequence.new(Settings.DebugColor)
+			Trail.Enabled = CasterObject._Debug and (DirectChild or CasterObject.Recursive)
+			Trail.LightEmission = 1
+			Trail.Transparency = TrailTransparency
+			Trail.FaceCamera = true
+			Trail.Lifetime = Settings.DebugLifetime
 
-				Trail.Attachment0 = Attachment
-				Trail.Attachment1 = TrailAttachment
+			Trail.Attachment0 = Attachment
+			Trail.Attachment1 = TrailAttachment
 
-				Trail.Parent = TrailAttachment
-				TrailAttachment.Parent = Attachment.Parent
+			Trail.Parent = TrailAttachment
+			TrailAttachment.Parent = Attachment.Parent
 
-				table.insert(DebugTrails, Trail)
-			end
+			coroutine.wrap(function()
+				repeat
+					Attachment.AncestryChanged:Wait()
+				until not Attachment:IsDescendantOf(CasterObject.Object)
+
+				TrailAttachment:Destroy()
+				DebugTrails[Trail] = nil
+				DamagePoints[Attachment] = nil
+			end)()
+			DebugTrails[Trail] = TrailAttachment
 		end
 	end
 	CasterObject = setmetatable({
@@ -231,9 +244,11 @@ RunService.Heartbeat:Connect(function()
 			continue
 		end
 
-		for _, Data in next, Caster._DamagePoints do
-			if Caster.Recursive or Data.DirectChild then
-				UpdateAttachment(Data.Attachment, Caster, LastPositions)
+		local RecursiveCaster = Caster.Recursive
+
+		for Attachment, DirectChild in next, Caster._DamagePoints do
+			if DirectChild or RecursiveCaster then
+				UpdateAttachment(Attachment, Caster, LastPositions)
 			end
 		end
 	end
@@ -273,7 +288,8 @@ ReplicationRemote.OnClientEvent:Connect(function(Status, Data, AdditionalData)
 			for Name, Value in next, AdditionalData do
 				if Name == 'Object' then
 					Caster:SetObject(Value)
-				else
+				elseif Name == 'Debug' then
+					Caster[(Value and 'Start' or 'Disable') .. 'Debug'](Caster)
 					Caster[Name] = Value
 				end
 			end
