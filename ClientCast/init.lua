@@ -259,21 +259,28 @@ function ClientCaster:Stop()
 	self:DisableDebug()
 end
 function ClientCaster:SetOwner(NewOwner)
-	IsValidOwner(NewOwner)
-	local OldConn = self._ReplicationConnection
-	local ReplConn = NewOwner ~= nil and Replication.new(NewOwner, self.Object, self.RaycastParams, self)
-	self._ReplicationConnection = ReplConn
-
-	if OldConn then
-		OldConn:Destroy()
-	end
-	self.Owner = NewOwner
-
-	if ClientCast.InitiatedCasters[self] then
-		if NewOwner ~= nil and ReplConn then
-			ReplConn:Start()
+	local Remainder = time() - self._Created
+	coroutine.wrap(function()
+		if Remainder < 0.1 then
+			wait(0.1 - Remainder)
 		end
-	end
+
+		IsValidOwner(NewOwner)
+		local OldConn = self._ReplicationConnection
+		local ReplConn = NewOwner ~= nil and Replication.new(NewOwner, self.Object, self.RaycastParams, self)
+		self._ReplicationConnection = ReplConn
+
+		if OldConn then
+			OldConn:Destroy()
+		end
+		self.Owner = NewOwner
+
+		if ClientCast.InitiatedCasters[self] then
+			if NewOwner ~= nil and ReplConn then
+				ReplConn:Start()
+			end
+		end
+	end)()
 end
 function ClientCaster:GetOwner()
 	return self.Owner
@@ -321,35 +328,55 @@ function ClientCaster:SetObject(Object)
 	self._DescendantConnection = self.Owner == nil and Object.DescendantAdded:Connect(self._OnDamagePointAdded) or nil
 
 	local ReplicationConnection = self._ReplicationConnection
-	if ReplicationConnection then
-		ReplicationConnection:Update({
-			Object = Object
-		})
-	end
+	coroutine.wrap(function()
+		if ReplicationConnection then
+			local Remainder = time() - self._Created
+			if Remainder < 1 then
+				wait(1 - Remainder)
+			end
+
+			ReplicationConnection:Update({
+				Object = Object
+			})
+		end
+	end)()
 end
 function ClientCaster:GetObject()
 	return self.Object
 end
 function ClientCaster:EditRaycastParams(RaycastParameters)
 	self.RaycastParams = RaycastParameters
-
 	local ReplicationConnection = self._ReplicationConnection
 	if ReplicationConnection then
-		ReplicationConnection:Update({
-			RaycastParams = RaycastParameters
-		})
+		local Remainder = time() - self._Created
+
+		coroutine.wrap(function()
+			if Remainder < 1 then
+				wait(1 - Remainder)
+			end
+			ReplicationConnection:Update({
+				RaycastParams = RaycastParameters
+			})
+		end)()
 	end
 end
 function ClientCaster:SetRecursive(Bool)
 	AssertType(Bool, 'boolean', 'Unexpected argument #1 to \'ClientCaster.SetRecursive\' (%s expected, got %s)')
 	self.Recursive = Bool
 
-	local ReplicationConnection = self._ReplicationConnection
-	if ReplicationConnection then
-		ReplicationConnection:Update({
-			Recursive = Bool
-		})
-	end
+	local Remainder = time() - self._Created
+	coroutine.wrap(function()
+		if Remainder < 0.1 then
+			wait(0.1 - Remainder)
+		end
+
+		local ReplicationConnection = self._ReplicationConnection
+		if ReplicationConnection then
+			ReplicationConnection:Update({
+				Recursive = Bool
+			})
+		end
+	end)()
 end
 function ClientCaster:__index(Index)
 	local CollisionIndex = CollisionBaseName[Index]
@@ -428,6 +455,7 @@ function ClientCast.new(Object, RaycastParameters, NetworkOwner)
 			Any = {}
 		},
 		_ToClean = {},
+		_Created = time(),
 		_ReplicationConnection = false,
 		_Debug = Settings.DebugMode,
 		_ExhaustionTime = 1,

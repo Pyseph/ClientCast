@@ -290,6 +290,7 @@ ReplicationRemote.OnClientEvent:Connect(function(Status, Data, AdditionalData)
 					Caster:SetObject(Value)
 				elseif Name == 'Debug' then
 					Caster[(Value and 'Start' or 'Disable') .. 'Debug'](Caster)
+				else
 					Caster[Name] = Value
 				end
 			end
