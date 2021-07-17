@@ -91,9 +91,9 @@ local function IsValid(SerializedResult)
 	end
 
 	return (SerializedResult.Instance == nil or SerializedResult.Instance:IsA('BasePart') or SerializedResult.Instance:IsA('Terrain')) and
-		   IsA(SerializedResult.Position, 'Vector3') and
-		   IsA(SerializedResult.Material, 'EnumItem') and
-		   IsA(SerializedResult.Normal, 'Vector3')
+		IsA(SerializedResult.Position, 'Vector3') and
+		IsA(SerializedResult.Material, 'EnumItem') and
+		IsA(SerializedResult.Normal, 'Vector3')
 end
 
 local Replication = {}
@@ -231,8 +231,8 @@ function ClientCaster:Destroy()
 	end
 
 	self._DescendantConnection:Disconnect()
-	for _, DebugTrail in next, self._DebugTrails do
-		DebugTrail.Parent:Destroy()
+	for _, DebugAttachment in next, self._DebugTrails do
+		DebugAttachment:Destroy()
 	end
 
 	ClientCast.InitiatedCasters[self] = nil
@@ -308,8 +308,8 @@ end
 function ClientCaster:SetObject(Object)
 	self.Object = Object
 
-	for _, DebugTrail in next, self._DebugTrails do
-		DebugTrail.Parent:Destroy()
+	for _, DebugAttachment in next, self._DebugTrails do
+		DebugAttachment:Destroy()
 	end
 	table.clear(self._DebugTrails)
 	table.clear(self._DamagePoints)

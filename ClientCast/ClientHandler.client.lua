@@ -97,8 +97,8 @@ function ClientCaster:Destroy()
 			Event:Destroy()
 		end
 	end
-	for _, DebugTrail in next, self._DebugTrails do
-		DebugTrail.Parent:Destroy()
+	for _, DebugAttachment in next, self._DebugTrails do
+		DebugAttachment:Destroy()
 	end
 end
 function ClientCaster:Stop()
