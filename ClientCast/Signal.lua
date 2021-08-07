@@ -43,7 +43,7 @@ end
 
 function Signal:Invoke(...)
     for _, Callback in next, self._Connections do
-        coroutine.resume(coroutine.create(Callback), ...)
+        task.spawn(Callback, ...)
     end
 end
 

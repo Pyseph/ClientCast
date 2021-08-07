@@ -1,12 +1,14 @@
-wait() -- Necessary wait because the Parent property is locked for a split moment
-local ThisScript = script -- script.Parent = x makes selene mad :Z
-ThisScript.Parent = game:GetService('Players').LocalPlayer:FindFirstChildOfClass('PlayerScripts')
-
 local ReplicatedStorage = game:GetService('ReplicatedStorage')
 local RunService = game:GetService('RunService')
+local Players = game:GetService('Players')
 
 local ReplicationRemote = ReplicatedStorage:WaitForChild('ClientCast-Replication')
 local PingRemote = ReplicatedStorage:WaitForChild('ClientCast-Ping')
+
+task.defer(function()
+	local ThisScript = script -- script.Parent = x makes selene mad :Z
+	ThisScript.Parent = Players.LocalPlayer:FindFirstChildOfClass('PlayerScripts')
+end)
 
 PingRemote.OnClientInvoke = function() end
 
@@ -156,7 +158,7 @@ function ClientCast.new(Object, RaycastParameters)
 			Trail.Parent = TrailAttachment
 			TrailAttachment.Parent = Attachment.Parent
 
-			coroutine.wrap(function()
+			task.spawn(function()
 				repeat
 					Attachment.AncestryChanged:Wait()
 				until not Attachment:IsDescendantOf(CasterObject.Object)
@@ -164,7 +166,7 @@ function ClientCast.new(Object, RaycastParameters)
 				TrailAttachment:Destroy()
 				DebugTrails[Trail] = nil
 				DamagePoints[Attachment] = nil
-			end)()
+			end)
 			DebugTrails[Trail] = TrailAttachment
 		end
 	end

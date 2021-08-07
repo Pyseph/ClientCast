@@ -11,7 +11,7 @@ local Settings = {
 }
 
 if Settings.AutoSetup then
-	require(script.ClientConnection)(ClientCast)
+	require(script.ClientConnection)()
 end
 
 ClientCast.Settings = Settings
@@ -24,28 +24,26 @@ local ReplicationRemote = ReplicatedStorage:FindFirstChild('ClientCast-Replicati
 local PingRemote = ReplicatedStorage:FindFirstChild('ClientCast-Ping')
 
 local Signal = require(script.Signal)
-local Wait = require(script.RBXWait)
 
 local function SafeRemoteInvoke(RemoteFunction, Player, MaxYield)
 	local ThreadResumed = false
 	local Thread = coroutine.running()
 
-	coroutine.wrap(function()
+	task.spawn(function()
 		local TimestampStart = time()
 		RemoteFunction:InvokeClient(Player)
 		local TimestampEnd = time()
 
 		ThreadResumed = true
 		coroutine.resume(Thread, math.min(TimestampEnd - TimestampStart, MaxYield))
-	end)()
+	end)
 
-	coroutine.wrap(function()
-		Wait(MaxYield * 2)
+	task.delay(MaxYield * 2, function()
 		if not ThreadResumed then
 			ThreadResumed = true
 			coroutine.resume(Thread, MaxYield)
 		end
-	end)()
+	end)
 	-- Divide by 2 because this is a two-way trip: server → client → server
 	return coroutine.yield() / 2
 end
@@ -260,9 +258,9 @@ function ClientCaster:Stop()
 end
 function ClientCaster:SetOwner(NewOwner)
 	local Remainder = time() - self._Created
-	coroutine.wrap(function()
+	task.spawn(function()
 		if Remainder < 0.1 then
-			wait(0.1 - Remainder)
+			task.wait(0.1 - Remainder)
 		end
 
 		IsValidOwner(NewOwner)
@@ -280,7 +278,7 @@ function ClientCaster:SetOwner(NewOwner)
 				ReplConn:Start()
 			end
 		end
-	end)()
+	end)
 end
 function ClientCaster:GetOwner()
 	return self.Owner
@@ -328,18 +326,18 @@ function ClientCaster:SetObject(Object)
 	self._DescendantConnection = self.Owner == nil and Object.DescendantAdded:Connect(self._OnDamagePointAdded) or nil
 
 	local ReplicationConnection = self._ReplicationConnection
-	coroutine.wrap(function()
+	task.spawn(function()
 		if ReplicationConnection then
 			local Remainder = time() - self._Created
 			if Remainder < 1 then
-				wait(1 - Remainder)
+				task.wait(1 - Remainder)
 			end
 
 			ReplicationConnection:Update({
 				Object = Object
 			})
 		end
-	end)()
+	end)
 end
 function ClientCaster:GetObject()
 	return self.Object
@@ -350,14 +348,14 @@ function ClientCaster:EditRaycastParams(RaycastParameters)
 	if ReplicationConnection then
 		local Remainder = time() - self._Created
 
-		coroutine.wrap(function()
+		task.spawn(function()
 			if Remainder < 1 then
-				wait(1 - Remainder)
+				task.wait(1 - Remainder)
 			end
 			ReplicationConnection:Update({
 				RaycastParams = RaycastParameters
 			})
-		end)()
+		end)
 	end
 end
 function ClientCaster:SetRecursive(Bool)
@@ -365,9 +363,9 @@ function ClientCaster:SetRecursive(Bool)
 	self.Recursive = Bool
 
 	local Remainder = time() - self._Created
-	coroutine.wrap(function()
+	task.spawn(function()
 		if Remainder < 0.1 then
-			wait(0.1 - Remainder)
+			task.wait(0.1 - Remainder)
 		end
 
 		local ReplicationConnection = self._ReplicationConnection
@@ -376,7 +374,7 @@ function ClientCaster:SetRecursive(Bool)
 				Recursive = Bool
 			})
 		end
-	end)()
+	end)
 end
 function ClientCaster:__index(Index)
 	local CollisionIndex = CollisionBaseName[Index]
@@ -387,8 +385,7 @@ function ClientCaster:__index(Index)
 		return CollisionEvent.Invoked
 	end
 
-	local Value = ClientCaster[Index]
-	return (type(Value) == 'function' and not Settings.FunctionDebug) and coroutine.wrap(Value) or Value
+	return rawget(ClientCaster, Index)
 end
 
 local UniqueId = 0
@@ -430,7 +427,7 @@ function ClientCast.new(Object, RaycastParameters, NetworkOwner)
 				Trail.Parent = TrailAttachment
 				TrailAttachment.Parent = Attachment.Parent
 
-				coroutine.wrap(function()
+				task.spawn(function()
 					repeat
 						Attachment.AncestryChanged:Wait()
 					until not Attachment:IsDescendantOf(CasterObject.Object)
@@ -438,7 +435,7 @@ function ClientCast.new(Object, RaycastParameters, NetworkOwner)
 					TrailAttachment:Destroy()
 					DebugTrails[Trail] = nil
 					DamagePoints[Attachment] = nil
-				end)()
+				end)
 				DebugTrails[Trail] = TrailAttachment
 			end
 		end
