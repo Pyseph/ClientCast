@@ -258,18 +258,19 @@ RunService.Heartbeat:Connect(function()
 	end
 end)
 
+local function CreateCaster(Data)
+	local Caster = ClientCast.new(Data.Object, DeserializeParams(Data.RaycastParams))
+
+	ClientCasters[Data.Id] = Caster
+	Caster._Debug = Data.Debug
+
+	return Caster
+end
+
 ReplicationRemote.OnClientEvent:Connect(function(Status, Data, AdditionalData)
 	if Status == 'Start' then
-		local Caster = ClientCasters[Data.Id]
-
-		if not Caster then
-			Caster = ClientCast.new(Data.Object, DeserializeParams(Data.RaycastParams))
-
-			ClientCasters[Data.Id] = Caster
-			Caster._Debug = Data.Debug
-		end
+		local Caster = ClientCasters[Data.Id] or CreateCaster(Data)
 		Caster:Start()
-
 	elseif Status == 'Destroy' then
 		local Caster = ClientCasters[Data.Id]
 
@@ -278,7 +279,6 @@ ReplicationRemote.OnClientEvent:Connect(function(Status, Data, AdditionalData)
 			Caster = nil
 			ClientCasters[Data.Id] = nil
 		end
-
 	elseif Status == 'Stop' then
 		local Caster = ClientCasters[Data.Id]
 
@@ -286,17 +286,15 @@ ReplicationRemote.OnClientEvent:Connect(function(Status, Data, AdditionalData)
 			Caster:Stop()
 		end
 	elseif Status == 'Update' then
-		local Caster = ClientCasters[Data.Id]
+		local Caster = ClientCasters[Data.Id] or CreateCaster(Data)
 
-		if Caster then
-			for Name, Value in next, AdditionalData do
-				if Name == 'Object' then
-					Caster:SetObject(Value)
-				elseif Name == 'Debug' then
-					Caster[(Value and 'Start' or 'Disable') .. 'Debug'](Caster)
-				else
-					Caster[Name] = Value
-				end
+		for Name, Value in next, AdditionalData do
+			if Name == 'Object' then
+				Caster:SetObject(Value)
+			elseif Name == 'Debug' then
+				Caster[(Value and 'Start' or 'Disable') .. 'Debug'](Caster)
+			else
+				Caster[Name] = Value
 			end
 		end
 	end
