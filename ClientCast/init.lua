@@ -254,7 +254,10 @@ function ClientCaster:Stop()
 
 	ClientCast.InitiatedCasters[self] = nil
 	self.Disabled = true
+
+	local LocalizedState = self._Debug
 	self:DisableDebug()
+	self._Debug = LocalizedState
 end
 function ClientCaster:SetOwner(NewOwner)
 	local Remainder = time() - self._Created

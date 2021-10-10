@@ -113,7 +113,9 @@ function ClientCaster:Stop()
 		self._DescendantConnection = nil
 	end
 
+	local LocalizedState = self._Debug
 	self:DisableDebug()
+	self._Debug = LocalizedState
 end
 function ClientCaster:__index(Index)
 	local CollisionIndex = CollisionBaseName[Index]
