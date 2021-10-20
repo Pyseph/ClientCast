@@ -232,7 +232,7 @@ local function UpdateAttachment(Attachment, Caster, LastPositions)
 	local LastPosition = LastPositions[Attachment] or CurrentPosition
 
 	if CurrentPosition ~= LastPosition then
-		local RaycastResult = workspace:Raycast(CurrentPosition, CurrentPosition - LastPosition, Caster.RaycastParams)
+		local RaycastResult = workspace:Raycast(CurrentPosition, LastPosition - CurrentPosition, Caster.RaycastParams)
 
 		UpdateCasterEvents(RaycastResult)
 	end
