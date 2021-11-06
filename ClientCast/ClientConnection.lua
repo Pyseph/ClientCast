@@ -1,15 +1,15 @@
 return function()
-	local StarterPlayer = game:GetService('StarterPlayer')
-	local ReplicatedStorage = game:GetService('ReplicatedStorage')
-	local Players = game:GetService('Players')
+	local StarterPlayer = game:GetService("StarterPlayer")
+	local ReplicatedStorage = game:GetService("ReplicatedStorage")
+	local Players = game:GetService("Players")
 
 	local function InitRemote(Class, Name)
 		local Remote = Instance.new(Class)
-		Remote.Name = 'ClientCast-' .. Name
+		Remote.Name = "ClientCast-" .. Name
 		Remote.Parent = ReplicatedStorage
 	end
-	InitRemote('RemoteEvent', 'Replication')
-	InitRemote('RemoteFunction', 'Ping')
+	InitRemote("RemoteEvent", "Replication")
+	InitRemote("RemoteFunction", "Ping")
 
 	local ScriptsHolder = script.Parent
 	local ClientHandler = ScriptsHolder.ClientHandler
@@ -20,9 +20,9 @@ return function()
 
 		ClonedHandler.Parent = Parent
 	end
-	CloneHandler(StarterPlayer:FindFirstChildOfClass('StarterPlayerScripts'))
+	CloneHandler(StarterPlayer:FindFirstChildOfClass("StarterPlayerScripts"))
 
 	for _, Player in next, Players:GetPlayers() do
-		CloneHandler(Player:FindFirstChildOfClass('PlayerGui'))
+		CloneHandler(Player:FindFirstChildOfClass("PlayerGui"))
 	end
 end

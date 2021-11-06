@@ -1,7 +1,7 @@
 local ClientCast = {}
 local Settings = {
-	AttachmentName = 'DmgPoint', -- The name of the attachment that this network will raycast from
-	DebugAttachmentName = 'ClientCast-Debug', -- The name of the debug trail attachment
+	AttachmentName = "DmgPoint", -- The name of the attachment that this network will raycast from
+	DebugAttachmentName = "ClientCast-Debug", -- The name of the debug trail attachment
 
 	FunctionDebug = false,
 	DebugMode = false, -- DebugMode visualizes the rays, from last to current position
@@ -17,11 +17,11 @@ end
 ClientCast.Settings = Settings
 ClientCast.InitiatedCasters = {}
 
-local RunService = game:GetService('RunService')
-local ReplicatedStorage = game:GetService('ReplicatedStorage')
+local RunService = game:GetService("RunService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local ReplicationRemote = ReplicatedStorage:FindFirstChild('ClientCast-Replication')
-local PingRemote = ReplicatedStorage:FindFirstChild('ClientCast-Ping')
+local ReplicationRemote = ReplicatedStorage:FindFirstChild("ClientCast-Replication")
+local PingRemote = ReplicatedStorage:FindFirstChild("ClientCast-Ping")
 
 local Signal = require(script.Signal)
 
@@ -35,17 +35,17 @@ local function SafeRemoteInvoke(RemoteFunction, Player, MaxYield)
 		local TimestampEnd = time()
 
 		ThreadResumed = true
-		coroutine.resume(Thread, math.min(TimestampEnd - TimestampStart, MaxYield))
+		task.spawn(Thread, math.max(TimestampEnd - TimestampStart, MaxYield))
 	end)
 
-	task.delay(MaxYield * 2, function()
+	task.delay(MaxYield, function()
 		if not ThreadResumed then
 			ThreadResumed = true
-			coroutine.resume(Thread, MaxYield)
+			task.spawn(Thread, MaxYield)
 		end
 	end)
-	-- Divide by 2 because this is a two-way trip: server → client → server
-	return coroutine.yield() / 2
+
+	return coroutine.yield()
 end
 
 local function SerializeParams(Params)
@@ -65,33 +65,33 @@ local function AssertType(Object, ExpectedType, Message)
 	end
 end
 local function AssertClass(Object, ExpectedClass, Message)
-	AssertType(Object, 'Instance', Message)
+	AssertType(Object, "Instance", Message)
 	if not Object:IsA(ExpectedClass) then
 		error(string.format(Message, ExpectedClass, Object.Class), 4)
 	end
 end
 local function AssertNaN(Object, Message)
 	if Object ~= Object then
-		error(string.format(Message, 'number', typeof(Object)), 4)
+		error(string.format(Message, "number", typeof(Object)), 4)
 	end
 end
 local function IsValidOwner(Value)
-	local IsInstance = IsA(Value, 'Instance')
+	local IsInstance = IsA(Value, "Instance")
 	if not IsInstance and Value ~= nil then
-		error('Unable to cast value to Object', 4)
-	elseif IsInstance and not Value:IsA('Player') then
-		error('SetOwner only takes player or \'nil\' instance as an argument.', 4)
+		error("Unable to cast value to Object", 4)
+	elseif IsInstance and not Value:IsA("Player") then
+		error("SetOwner only takes player or 'nil' instance as an argument.", 4)
 	end
 end
 local function IsValid(SerializedResult)
-	if not IsA(SerializedResult, 'table') then
+	if not IsA(SerializedResult, "table") then
 		return false
 	end
 
-	return (SerializedResult.Instance == nil or SerializedResult.Instance:IsA('BasePart') or SerializedResult.Instance:IsA('Terrain')) and
-		IsA(SerializedResult.Position, 'Vector3') and
-		IsA(SerializedResult.Material, 'EnumItem') and
-		IsA(SerializedResult.Normal, 'Vector3')
+	return (SerializedResult.Instance == nil or SerializedResult.Instance:IsA("BasePart") or SerializedResult.Instance:IsA("Terrain")) and
+		IsA(SerializedResult.Position, "Vector3") and
+		IsA(SerializedResult.Material, "EnumItem") and
+		IsA(SerializedResult.Normal, "Vector3")
 end
 
 local Replication = {}
@@ -100,9 +100,9 @@ ReplicationBase.__index = ReplicationBase
 
 function ReplicationBase:Start()
 	local Owner = self.Owner
-	AssertClass(Owner, 'Player')
+	AssertClass(Owner, "Player")
 
-	ReplicationRemote:FireClient(Owner, 'Start', {
+	ReplicationRemote:FireClient(Owner, "Start", {
 		Owner = Owner,
 		Object = self.Object,
 		Debug = self.Caster._Debug,
@@ -111,8 +111,8 @@ function ReplicationBase:Start()
 	})
 
 	self.Connection = ReplicationRemote.OnServerEvent:Connect(function(Player, Code, RaycastResult, Humanoid)
-		if Player == Owner and IsValid(RaycastResult) and (Code == 'Any' or Code == 'Humanoid') then
-			Humanoid = Code == 'Humanoid' and Humanoid or nil
+		if Player == Owner and IsValid(RaycastResult) and (Code == "Any" or Code == "Humanoid") then
+			Humanoid = Code == "Humanoid" and Humanoid or nil
 			for Event in next, self.Caster._CollidedEvents[Code] do
 				Event:Invoke(RaycastResult, Humanoid)
 			end
@@ -127,12 +127,12 @@ function ReplicationBase:Update(AdditionalData)
 		RaycastParams = SerializeParams(self.RaycastParams),
 		Id = self.Caster._UniqueId
 	}
-	ReplicationRemote:FireClient(self.Owner, 'Update', Data, AdditionalData)
+	ReplicationRemote:FireClient(self.Owner, "Update", Data, AdditionalData)
 end
 function ReplicationBase:Stop(Destroy)
 	local Owner = self.Owner
 
-	ReplicationRemote:FireClient(Owner, Destroy and 'Destroy' or 'Stop', {
+	ReplicationRemote:FireClient(Owner, Destroy and "Destroy" or "Stop", {
 		Owner = Owner,
 		Object = self.Object,
 		Id = self.Caster._UniqueId
@@ -154,8 +154,8 @@ function ReplicationBase:Destroy()
 end
 
 function Replication.new(Player, Object, RaycastParameters, Caster)
-	AssertClass(Player, 'Player', 'Unexpected owner in \'ReplicationBase.Stop\' (%s expected, got %s)')
-	assert(type(Caster) == 'table' and Caster._Class == 'Caster', 'Unexpect argument #4 - Caster expected')
+	AssertClass(Player, "Player", "Unexpected owner in 'ReplicationBase.Stop' (%s expected, got %s)")
+	assert(type(Caster) == "table" and Caster._Class == "Caster", "Unexpect argument #4 - Caster expected")
 
 	return setmetatable({
 		Owner = Player,
@@ -204,8 +204,8 @@ function ClientCaster:StartDebug()
 end
 
 local CollisionBaseName = {
-	Collided = 'Any',
-	HumanoidCollided = 'Humanoid'
+	Collided = "Any",
+	HumanoidCollided = "Humanoid"
 }
 
 function ClientCaster:Start()
@@ -241,7 +241,7 @@ function ClientCaster:Destroy()
 	self.Disabled = true
 
 	for Prop, Val in next, self do
-		if type(Val) == 'function' then
+		if type(Val) == "function" then
 			self[Prop] = function() end
 		end
 	end
@@ -287,10 +287,10 @@ function ClientCaster:GetOwner()
 	return self.Owner
 end
 function ClientCaster:SetMaxPingExhaustion(Time)
-	AssertType(Time, 'number', 'Unexpected argument #1 to \'ClientCaster.SetMaxPingExhaustion\' (%s expected, got %s)')
-	AssertNaN(Time, 'Unexpected argument #1 to \'ClientCaster.SetMaxPingExhaustion\' (%s expected, got NaN)')
+	AssertType(Time, "number", "Unexpected argument #1 to 'ClientCaster.SetMaxPingExhaustion' (%s expected, got %s)")
+	AssertNaN(Time, "Unexpected argument #1 to 'ClientCaster.SetMaxPingExhaustion' (%s expected, got NaN)")
 	if Time < 0.1 then
-		error('The max ping exhaustion time passed to \'ClientCaster.SetMaxPingExhaustion\' must be longer than 0.1', 3)
+		error("The max ping exhaustion time passed to 'ClientCaster.SetMaxPingExhaustion' must be longer than 0.1", 3)
 		return
 	end
 
@@ -362,7 +362,7 @@ function ClientCaster:EditRaycastParams(RaycastParameters)
 	end
 end
 function ClientCaster:SetRecursive(Bool)
-	AssertType(Bool, 'boolean', 'Unexpected argument #1 to \'ClientCaster.SetRecursive\' (%s expected, got %s)')
+	AssertType(Bool, "boolean", "Unexpected argument #1 to 'ClientCaster.SetRecursive' (%s expected, got %s)")
 	self.Recursive = Bool
 
 	local Remainder = time() - self._Created
@@ -398,21 +398,21 @@ local function GenerateId()
 end
 function ClientCast.new(Object, RaycastParameters, NetworkOwner)
 	IsValidOwner(NetworkOwner)
-	AssertType(Object, 'Instance', 'Unexpected argument #2 to \'CastObject.new\' (%s expected, got %s)')
-	AssertType(RaycastParameters, 'RaycastParams', 'Unexpected argument #3 to \'CastObject.new\' (%s expected, got %s)')
+	AssertType(Object, "Instance", "Unexpected argument #2 to 'CastObject.new' (%s expected, got %s)")
+	AssertType(RaycastParameters, "RaycastParams", "Unexpected argument #3 to 'CastObject.new' (%s expected, got %s)")
 	local CasterObject
 
 	local DebugTrails = {}
 	local DamagePoints = {}
 
 	local function OnDamagePointAdded(Attachment)
-		if Attachment.ClassName == 'Attachment' and Attachment.Name == Settings.AttachmentName and not DamagePoints[Attachment] then
+		if Attachment.ClassName == "Attachment" and Attachment.Name == Settings.AttachmentName and not DamagePoints[Attachment] then
 			local DirectChild = Attachment.Parent == CasterObject.Object
 			DamagePoints[Attachment] = DirectChild
 
 			if CasterObject.Owner == nil then
-				local Trail = Instance.new('Trail')
-				local TrailAttachment = Instance.new('Attachment')
+				local Trail = Instance.new("Trail")
+				local TrailAttachment = Instance.new("Attachment")
 
 				TrailAttachment.Name = Settings.DebugAttachmentName
 				TrailAttachment.Position = Attachment.Position - AttachmentOffset
@@ -463,7 +463,7 @@ function ClientCast.new(Object, RaycastParameters, NetworkOwner)
 		_DamagePoints = DamagePoints,
 		_DebugTrails = DebugTrails,
 		_OnDamagePointAdded = OnDamagePointAdded,
-		_Class = 'Caster'
+		_Class = "Caster"
 	}, ClientCaster)
 
 	for _, Descendant in next, Object:GetDescendants() do
@@ -481,8 +481,8 @@ local function UpdateCasterEvents(Caster, RaycastResult)
 			CollisionEvent:Invoke(RaycastResult)
 		end
 
-		local ModelAncestor = RaycastResult.Instance:FindFirstAncestorOfClass('Model')
-		local Humanoid = ModelAncestor and ModelAncestor:FindFirstChildOfClass('Humanoid')
+		local ModelAncestor = RaycastResult.Instance:FindFirstAncestorOfClass("Model")
+		local Humanoid = ModelAncestor and ModelAncestor:FindFirstChildOfClass("Humanoid")
 		if Humanoid then
 			for HumanoidEvent in next, Caster._CollidedEvents.Humanoid do
 				HumanoidEvent:Invoke(RaycastResult, Humanoid)

@@ -1,21 +1,21 @@
-local ReplicatedStorage = game:GetService('ReplicatedStorage')
-local RunService = game:GetService('RunService')
-local Players = game:GetService('Players')
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
 
-local ReplicationRemote = ReplicatedStorage:WaitForChild('ClientCast-Replication')
-local PingRemote = ReplicatedStorage:WaitForChild('ClientCast-Ping')
+local ReplicationRemote = ReplicatedStorage:WaitForChild("ClientCast-Replication")
+local PingRemote = ReplicatedStorage:WaitForChild("ClientCast-Ping")
 
 task.defer(function()
 	local ThisScript = script -- script.Parent = x makes selene mad :Z
-	ThisScript.Parent = Players.LocalPlayer:FindFirstChildOfClass('PlayerScripts')
+	ThisScript.Parent = Players.LocalPlayer:FindFirstChildOfClass("PlayerScripts")
 end)
 
 PingRemote.OnClientInvoke = function() end
 
 local ClientCast = {}
 local Settings = {
-	AttachmentName = 'DmgPoint', -- The name of the attachment that this network will raycast from
-	DebugAttachmentName = 'ClientCast-Debug', -- The name of the debug trail attachment
+	AttachmentName = "DmgPoint", -- The name of the attachment that this network will raycast from
+	DebugAttachmentName = "ClientCast-Debug", -- The name of the debug trail attachment
 
 	DebugMode = false, -- DebugMode visualizes the rays, from last to current position
 	DebugColor = Color3.new(1, 0, 0), -- The color of the visualized ray
@@ -56,8 +56,8 @@ function ClientCaster:StartDebug()
 end
 
 local CollisionBaseName = {
-	Collided = 'Any',
-	HumanoidCollided = 'Humanoid'
+	Collided = "Any",
+	HumanoidCollided = "Humanoid"
 }
 
 function ClientCaster:Start()
@@ -130,19 +130,19 @@ function ClientCaster:__index(Index)
 end
 
 function ClientCast.new(Object, RaycastParameters)
-	AssertType(Object, 'Instance', 'Unexpected argument #1 to \'CastObject.new\' (%s expected, got %s)')
+	AssertType(Object, "Instance", "Unexpected argument #1 to 'CastObject.new' (%s expected, got %s)")
 	local CasterObject
 
 	local DebugTrails = {}
 	local DamagePoints = {}
 
 	local function OnDamagePointAdded(Attachment)
-		if Attachment.ClassName == 'Attachment' and Attachment.Name == Settings.AttachmentName and not DamagePoints[Attachment] then
+		if Attachment.ClassName == "Attachment" and Attachment.Name == Settings.AttachmentName and not DamagePoints[Attachment] then
 			local DirectChild = Attachment.Parent == CasterObject.Object
 			DamagePoints[Attachment] = DirectChild
 
-			local Trail = Instance.new('Trail')
-			local TrailAttachment = Instance.new('Attachment')
+			local Trail = Instance.new("Trail")
+			local TrailAttachment = Instance.new("Attachment")
 
 			TrailAttachment.Name = Settings.DebugAttachmentName
 			TrailAttachment.Position = Attachment.Position - AttachmentOffset
@@ -208,7 +208,7 @@ end
 local function DeserializeParams(Input)
 	local Params = RaycastParams.new()
 	for Key, Value in next, Input do
-		if Key == 'FilterType' then
+		if Key == "FilterType" then
 			Value = Enum.RaycastFilterType[Value]
 		end
 		Params[Key] = Value
@@ -218,12 +218,12 @@ local function DeserializeParams(Input)
 end
 local function UpdateCasterEvents(RaycastResult)
 	if RaycastResult then
-		ReplicationRemote:FireServer('Any', SerializeResult(RaycastResult))
+		ReplicationRemote:FireServer("Any", SerializeResult(RaycastResult))
 
-		local ModelAncestor = RaycastResult.Instance:FindFirstAncestorOfClass('Model')
-		local Humanoid = ModelAncestor and ModelAncestor:FindFirstChildOfClass('Humanoid')
+		local ModelAncestor = RaycastResult.Instance:FindFirstAncestorOfClass("Model")
+		local Humanoid = ModelAncestor and ModelAncestor:FindFirstChildOfClass("Humanoid")
 		if Humanoid then
-			ReplicationRemote:FireServer('Humanoid', SerializeResult(RaycastResult), Humanoid)
+			ReplicationRemote:FireServer("Humanoid", SerializeResult(RaycastResult), Humanoid)
 		end
 	end
 end
@@ -268,10 +268,10 @@ local function CreateCaster(Data)
 end
 
 ReplicationRemote.OnClientEvent:Connect(function(Status, Data, AdditionalData)
-	if Status == 'Start' then
+	if Status == "Start" then
 		local Caster = ClientCasters[Data.Id] or CreateCaster(Data)
 		Caster:Start()
-	elseif Status == 'Destroy' then
+	elseif Status == "Destroy" then
 		local Caster = ClientCasters[Data.Id]
 
 		if Caster then
@@ -279,20 +279,20 @@ ReplicationRemote.OnClientEvent:Connect(function(Status, Data, AdditionalData)
 			Caster = nil
 			ClientCasters[Data.Id] = nil
 		end
-	elseif Status == 'Stop' then
+	elseif Status == "Stop" then
 		local Caster = ClientCasters[Data.Id]
 
 		if Caster then
 			Caster:Stop()
 		end
-	elseif Status == 'Update' then
+	elseif Status == "Update" then
 		local Caster = ClientCasters[Data.Id] or CreateCaster(Data)
 
 		for Name, Value in next, AdditionalData do
-			if Name == 'Object' then
+			if Name == "Object" then
 				Caster:SetObject(Value)
-			elseif Name == 'Debug' then
-				Caster[(Value and 'Start' or 'Disable') .. 'Debug'](Caster)
+			elseif Name == "Debug" then
+				Caster[(Value and "Start" or "Disable") .. "Debug"](Caster)
 			else
 				Caster[Name] = Value
 			end

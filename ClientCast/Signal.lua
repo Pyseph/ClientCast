@@ -28,7 +28,7 @@ function Signal.new()
         local CurrentThread, YieldConnection = coroutine.running(), nil
         YieldConnection = SignalObj:Connect(function(...)
             YieldConnection:Disconnect()
-            coroutine.resume(CurrentThread, ...)
+            task.spawn(CurrentThread, ...)
         end)
         return coroutine.yield()
     end
