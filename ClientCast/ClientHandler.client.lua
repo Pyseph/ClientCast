@@ -223,7 +223,7 @@ local function UpdateCasterEvents(RaycastResult)
 		local ModelAncestor = RaycastResult.Instance:FindFirstAncestorOfClass("Model")
 		local Humanoid = ModelAncestor and ModelAncestor:FindFirstChildOfClass("Humanoid")
 		if Humanoid then
-			ReplicationRemote:FireServer("Humanoid", SerializeResult(RaycastResult), Humanoid)
+			ReplicationRemote:FireServer("Humanoid", SerializeResult(RaycastResult))
 		end
 	end
 end

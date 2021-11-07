@@ -88,7 +88,7 @@ local function IsValid(SerializedResult)
 		return false
 	end
 
-	return (SerializedResult.Instance == nil or SerializedResult.Instance:IsA("BasePart") or SerializedResult.Instance:IsA("Terrain")) and
+	return (SerializedResult.Instance ~= nil and (SerializedResult.Instance:IsA("BasePart") or SerializedResult.Instance:IsA("Terrain"))) and
 		IsA(SerializedResult.Position, "Vector3") and
 		IsA(SerializedResult.Material, "EnumItem") and
 		IsA(SerializedResult.Normal, "Vector3")
@@ -110,9 +110,18 @@ function ReplicationBase:Start()
 		Id = self.Caster._UniqueId
 	})
 
-	self.Connection = ReplicationRemote.OnServerEvent:Connect(function(Player, Code, RaycastResult, Humanoid)
+	self.Connection = ReplicationRemote.OnServerEvent:Connect(function(Player, Code, RaycastResult)
 		if Player == Owner and IsValid(RaycastResult) and (Code == "Any" or Code == "Humanoid") then
-			Humanoid = Code == "Humanoid" and Humanoid or nil
+			local Humanoid
+			if Code == "Humanoid" then
+				local Model = RaycastResult.Instance:FindFirstAncestorOfClass("Model")
+				Humanoid = Model and Model:FindFirstChildOfClass("Humanoid")
+			end
+
+			if Code == "Humanoid" and Humanoid == nil then
+				return
+			end
+
 			for Event in next, self.Caster._CollidedEvents[Code] do
 				Event:Invoke(RaycastResult, Humanoid)
 			end
@@ -231,6 +240,11 @@ function ClientCaster:Destroy()
 	self._DescendantConnection:Disconnect()
 	for _, DebugAttachment in next, self._DebugTrails do
 		DebugAttachment:Destroy()
+	end
+	for _, EventsHolder in next, self._CollidedEvents do
+		for Event in next, EventsHolder do
+			Event:Destroy()
+		end
 	end
 
 	ClientCast.InitiatedCasters[self] = nil
