@@ -35,7 +35,7 @@ local function SafeRemoteInvoke(RemoteFunction, Player, MaxYield)
 		local TimestampEnd = time()
 
 		ThreadResumed = true
-		task.spawn(Thread, math.max(TimestampEnd - TimestampStart, MaxYield))
+		task.spawn(Thread, math.min(TimestampEnd - TimestampStart, MaxYield))
 	end)
 
 	task.delay(MaxYield, function()
