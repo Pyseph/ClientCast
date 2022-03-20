@@ -92,7 +92,10 @@ function ClientCaster:Destroy()
 	self.Disabled = true
 	ClientCast.InitiatedCasters[self] = nil
 
-	self._DescendantConnection:Disconnect()
+	if self._DescendantConnection then
+		self._DescendantConnection:Disconnect()
+		self.__DescendantConnection = nil
+	end
 
 	for _, EventsHolder in next, self._CollidedEvents do
 		for Event in next, EventsHolder do

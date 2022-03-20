@@ -237,7 +237,10 @@ function ClientCaster:Destroy()
 		ReplicationConn:Destroy()
 	end
 
-	self._DescendantConnection:Disconnect()
+	if self._DescendantConnection then
+		self._DescendantConnection:Disconnect()
+		self.__DescendantConnection = nil
+	end
 	for _, DebugAttachment in next, self._DebugTrails do
 		DebugAttachment:Destroy()
 	end
