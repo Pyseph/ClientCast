@@ -110,7 +110,8 @@ function ReplicationBase:Start()
 		Id = self.Caster._UniqueId
 	})
 
-	self.Connection = ReplicationRemote.OnServerEvent:Connect(function(Player, Code, RaycastResult)
+	local LocalizedConnection
+	LocalizedConnection = ReplicationRemote.OnServerEvent:Connect(function(Player, Code, RaycastResult)
 		if Player == Owner and IsValid(RaycastResult) and (Code == "Any" or Code == "Humanoid") then
 			local Humanoid
 			if Code == "Humanoid" then
@@ -127,6 +128,8 @@ function ReplicationBase:Start()
 			end
 		end
 	end)
+
+	self.Connection = LocalizedConnection
 end
 function ReplicationBase:Update(AdditionalData)
 	local Data = {
@@ -138,24 +141,30 @@ function ReplicationBase:Update(AdditionalData)
 	}
 	ReplicationRemote:FireClient(self.Owner, "Update", Data, AdditionalData)
 end
-function ReplicationBase:Stop(Destroy)
+function ReplicationBase:Stop(Destroying)
 	local Owner = self.Owner
 
-	ReplicationRemote:FireClient(Owner, Destroy and "Destroy" or "Stop", {
+	ReplicationRemote:FireClient(Owner, Destroying and "Destroy" or "Stop", {
 		Owner = Owner,
 		Object = self.Object,
 		Id = self.Caster._UniqueId
 	})
 
-	local ReplicationConn = self.Connection
-	if ReplicationConn then
-		ReplicationConn:Disconnect()
-		ReplicationConn = nil
-	end
+	local ReplicationConnection = self.Connection
 
-	if Destroy then
+	if Destroying then
 		table.clear(self)
 		setmetatable(self, nil)
+
+		if ReplicationConnection then
+			ReplicationConnection:Disconnect()
+		end
+	elseif ReplicationConnection then
+		task.delay(1, function()
+			if self.Connection == ReplicationConnection then
+				ReplicationConnection:Disconnect()
+			end
+		end)
 	end
 end
 function ReplicationBase:Destroy()
