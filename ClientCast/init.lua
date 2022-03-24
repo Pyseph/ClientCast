@@ -112,6 +112,10 @@ function ReplicationBase:Start()
 
 	local LocalizedConnection
 	LocalizedConnection = ReplicationRemote.OnServerEvent:Connect(function(Player, Code, RaycastResult)
+		if self.Caster.Disabled then
+			return
+		end
+
 		if Player == Owner and IsValid(RaycastResult) and (Code == "Any" or Code == "Humanoid") then
 			local Humanoid
 			if Code == "Humanoid" then
