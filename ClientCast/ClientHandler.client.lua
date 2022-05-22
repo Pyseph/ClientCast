@@ -132,7 +132,7 @@ function ClientCaster:__index(Index)
 	return rawget(ClientCaster, Index)
 end
 
-function ClientCast.new(Object, RaycastParameters)
+function ClientCast.new(Object, RaycastParameters, UniqueId)
 	AssertType(Object, "Instance", "Unexpected argument #1 to 'CastObject.new' (%s expected, got %s)")
 	local CasterObject
 
@@ -187,6 +187,7 @@ function ClientCast.new(Object, RaycastParameters)
 		},
 		_DamagePoints = DamagePoints,
 		_Debug = false,
+		_UniqueId = UniqueId,
 		_ToClean = {},
 		_DebugTrails = DebugTrails,
 		_OnDamagePointAdded = OnDamagePointAdded
@@ -219,14 +220,14 @@ local function DeserializeParams(Input)
 
 	return Params
 end
-local function UpdateCasterEvents(RaycastResult)
+local function UpdateCasterEvents(Caster, RaycastResult)
 	if RaycastResult then
-		ReplicationRemote:FireServer("Any", SerializeResult(RaycastResult))
+		ReplicationRemote:FireServer(Caster._UniqueId, "Any", SerializeResult(RaycastResult))
 
 		local ModelAncestor = RaycastResult.Instance:FindFirstAncestorOfClass("Model")
 		local Humanoid = ModelAncestor and ModelAncestor:FindFirstChildOfClass("Humanoid")
 		if Humanoid then
-			ReplicationRemote:FireServer("Humanoid", SerializeResult(RaycastResult))
+			ReplicationRemote:FireServer(Caster._UniqueId, "Humanoid", SerializeResult(RaycastResult))
 		end
 	end
 end
@@ -237,7 +238,7 @@ local function UpdateAttachment(Attachment, Caster, LastPositions)
 	if CurrentPosition ~= LastPosition then
 		local RaycastResult = workspace:Raycast(LastPosition, CurrentPosition - LastPosition, Caster.RaycastParams)
 
-		UpdateCasterEvents(RaycastResult)
+		UpdateCasterEvents(Caster, RaycastResult)
 	end
 
 	LastPositions[Attachment] = CurrentPosition
@@ -262,7 +263,7 @@ RunService.Heartbeat:Connect(function()
 end)
 
 local function CreateCaster(Data)
-	local Caster = ClientCast.new(Data.Object, DeserializeParams(Data.RaycastParams))
+	local Caster = ClientCast.new(Data.Object, DeserializeParams(Data.RaycastParams), Data.Id)
 
 	ClientCasters[Data.Id] = Caster
 	Caster._Debug = Data.Debug
