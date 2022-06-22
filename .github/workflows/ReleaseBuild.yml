@@ -29,7 +29,7 @@ jobs:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./release.rbxm
           asset_name: release.rbxm
-          asset_content_type: application/gzip
+          asset_content_type: application/rbxm
 
       - name: Create a Release
         uses: elgohr/Github-Release-Action@v4
