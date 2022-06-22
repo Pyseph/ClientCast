@@ -19,9 +19,9 @@ jobs:
         with:
           draft: false
           prerelease: false
-          release_name: ${{ steps.version.outputs.version }}
+          release_name: "Release"
           tag_name: ${{ github.ref }}
-          body_path: CHANGELOG.md
+          body: ""
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
 
