@@ -22,3 +22,10 @@ jobs:
       - run: foreman install
 
       - run: rojo build -o release.rbxm default.project.json
+
+      - name: Create a Release
+        uses: elgohr/Github-Release-Action@v4
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+        with:
+          title: MyReleaseMessage
