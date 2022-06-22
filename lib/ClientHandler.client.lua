@@ -28,7 +28,7 @@ ClientCast.InitiatedCasters = {}
 local TrailTransparency = NumberSequence.new({
 	NumberSequenceKeypoint.new(0, 0),
 	NumberSequenceKeypoint.new(0.5, 0),
-	NumberSequenceKeypoint.new(1, 1)
+	NumberSequenceKeypoint.new(1, 1),
 })
 local AttachmentOffset = Vector3.new(0, 0, 0.1)
 
@@ -57,7 +57,7 @@ end
 
 local CollisionBaseName = {
 	Collided = "Any",
-	HumanoidCollided = "Humanoid"
+	HumanoidCollided = "Humanoid",
 }
 
 function ClientCaster:Start()
@@ -140,7 +140,11 @@ function ClientCast.new(Object, RaycastParameters, UniqueId)
 	local DamagePoints = {}
 
 	local function OnDamagePointAdded(Attachment)
-		if Attachment.ClassName == "Attachment" and Attachment.Name == Settings.AttachmentName and not DamagePoints[Attachment] then
+		if
+			Attachment.ClassName == "Attachment"
+			and Attachment.Name == Settings.AttachmentName
+			and not DamagePoints[Attachment]
+		then
 			local DirectChild = Attachment.Parent == CasterObject.Object
 			DamagePoints[Attachment] = DirectChild
 
@@ -183,14 +187,14 @@ function ClientCast.new(Object, RaycastParameters, UniqueId)
 
 		_CollidedEvents = {
 			Humanoid = {},
-			Any = {}
+			Any = {},
 		},
 		_DamagePoints = DamagePoints,
 		_Debug = false,
 		_UniqueId = UniqueId,
 		_ToClean = {},
 		_DebugTrails = DebugTrails,
-		_OnDamagePointAdded = OnDamagePointAdded
+		_OnDamagePointAdded = OnDamagePointAdded,
 	}, ClientCaster)
 
 	for _, Descendant in next, Object:GetDescendants() do
@@ -206,7 +210,7 @@ local function SerializeResult(Result)
 		Instance = Result.Instance,
 		Position = Result.Position,
 		Material = Result.Material,
-		Normal = Result.Normal
+		Normal = Result.Normal,
 	}
 end
 local function DeserializeParams(Input)

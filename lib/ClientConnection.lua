@@ -23,6 +23,11 @@ return function()
 	CloneHandler(StarterPlayer:FindFirstChildOfClass("StarterPlayerScripts"))
 
 	for _, Player in next, Players:GetPlayers() do
-		CloneHandler(Player:FindFirstChildOfClass("PlayerGui"))
+		local TemporaryGui = Instance.new("ScreenGui")
+		TemporaryGui.Name = "ClientCast-Temp"
+		TemporaryGui.ResetOnSpawn = false
+
+		CloneHandler(TemporaryGui)
+		TemporaryGui.Parent = Player.PlayerGui
 	end
 end

@@ -39,7 +39,7 @@ local function acquireRunnerThreadAndCallEventHandler(fn, ...)
 	freeRunnerThread = acquiredRunnerThread
 end
 
--- Coroutine runner that we create coroutines of. The coroutine can be 
+-- Coroutine runner that we create coroutines of. The coroutine can be
 -- repeatedly resumed with functions to run followed by the argument to run
 -- them with.
 local function runEventHandlerInFreeThread(...)
@@ -63,7 +63,7 @@ function Connection.new(signal, fn)
 end
 
 function Connection:Disconnect()
-	assert(self._connected, "Can't disconnect a connection twice.", 2)
+	assert(self._connected, "Can't disconnect a connection twice.")
 	self._connected = false
 
 	-- Unhook the node, but DON'T clear it. That way any fire calls that are
@@ -85,12 +85,12 @@ end
 
 -- Make Connection strict
 setmetatable(Connection, {
-	__index = function(tb, key)
+	__index = function(_, key)
 		error(string.format("Attempt to get Connection::%s (not a valid member)", tostring(key)), 2)
 	end,
-	__newindex = function(tb, key, value)
+	__newindex = function(_, key, _)
 		error(string.format("Attempt to set Connection::%s (not a valid member)", tostring(key)), 2)
-	end
+	end,
 })
 
 -- Signal class
@@ -100,7 +100,7 @@ Signal.__index = Signal
 function Signal.new()
 	local Obj = setmetatable({
 		_handlerListHead = false,
-		Invoked = {}
+		Invoked = {},
 	}, Signal)
 	function Obj.Invoked:Connect(fn)
 		local connection = Connection.new(Obj, fn)
@@ -118,7 +118,7 @@ function Signal.new()
 		local waitingCoroutine = coroutine.running()
 		local callerScript = getfenv(2).script
 
-		local cn;
+		local cn
 		cn = self:Connect(function(...)
 			cn:Disconnect()
 			if callerScript:FindFirstAncestorOfClass("DataModel") then
@@ -164,12 +164,12 @@ end
 
 -- Make signal strict
 setmetatable(Signal, {
-	__index = function(tb, key)
+	__index = function(_, key)
 		error(string.format("Attempt to get Signal::%s (not a valid member)", tostring(key)), 2)
 	end,
-	__newindex = function(tb, key, value)
+	__newindex = function(_, key, _)
 		error(string.format("Attempt to set Signal::%s (not a valid member)", tostring(key)), 2)
-	end
+	end,
 })
 
 return Signal

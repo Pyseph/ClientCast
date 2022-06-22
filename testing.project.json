@@ -1,0 +1,24 @@
+{
+	"name": "[ClientCast] testing",
+	"tree": {
+		"$className": "DataModel",
+		"ReplicatedStorage": {
+			"$className": "ReplicatedStorage",
+			"[ClientCast]": {
+				"$path": "Include/Linking.lua",
+				"Packages": {
+					"$path": "Packages",
+					"[ClientCast]": {
+						"$path": "lib"
+					}
+				}
+			}
+		},
+		"ServerScriptService": {
+			"$className": "ServerScriptService",
+			"Server": {
+				"$path": "testing"
+			}
+		}
+	}
+}

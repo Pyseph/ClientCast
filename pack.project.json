@@ -1,0 +1,12 @@
+{
+	"name": "ClientCast",
+	"tree": {
+		"$path": "Include/Linking.lua",
+		"Packages": {
+			"$path": "Packages",
+			"ClientCast": {
+				"$path": "lib"
+			}
+		}
+	}
+}
