@@ -13,15 +13,28 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3
 
+      - name: release
+        uses: actions/create-release@v1
+        id: create_release
+        with:
+          draft: false
+          prerelease: false
+          release_name: ${{ steps.version.outputs.version }}
+          tag_name: ${{ github.ref }}
+          body_path: CHANGELOG.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+
       - name: Install Foreman
         uses: rojo-rbx/setup-foreman@v1
         with:
             token: ${{ secrets.RELEASE_TOKEN }}
       - run: foreman install
 
-      - run: rojo build -o release.rbxm default.project.json
+      - name: Build release.rbxm
+        run: rojo build -o release.rbxm default.project.json
 
-      - name: upload linux artifact
+      - name: Upload release.rbxm
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
