@@ -20,7 +20,7 @@ jobs:
           draft: false
           prerelease: false
           release_name: "Release"
-          tag_name: ${{ github.ref }}
+          tag_name: ver-${{ github.sha }}
           body: ""
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
