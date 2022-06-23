@@ -1,4 +1,25 @@
+--[=[
+	@class ClientCast
+
+	The constructor class for ClientCaster objects.
+]=]
 local ClientCast = {}
+--[=[
+	@interface Settings
+	@within ClientCast
+
+	.AttachmentName string
+	.DebugAttachmentName string
+	.FunctionDebug boolean
+	.DebugMode boolean
+	.DebugColor Color3
+	.DebugLifetime number
+	.AutoSetup boolean
+
+	The settings which ClientCast relies on for module behavior.
+]=]
+--- @prop Settings Settings
+--- @within ClientCast
 local Settings = {
 	AttachmentName = "DmgPoint", -- The name of the attachment that this network will raycast from
 	DebugAttachmentName = "ClientCast-Debug", -- The name of the debug trail attachment
@@ -22,6 +43,31 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local ReplicationRemote = ReplicatedStorage:FindFirstChild("ClientCast-Replication")
 local PingRemote = ReplicatedStorage:FindFirstChild("ClientCast-Ping")
+
+--[=[
+	@class Signal
+	A Lua-implementation of RBXScriptSignals, with near-identical behavior.
+]=]
+
+--- @method Connect
+--- @within Signal
+--- @param Callback function
+--- @return Connection
+--- Connects a callback to the Signal, which will be called everytime the Signal is fired.
+
+--[=[
+	@class Connection
+	The constructor class for ClientCaster objects.
+]=]
+
+--- @method Disconnect
+--- @within Connection
+--- Disonnects the Connection, with any :Fire calls no longer updating it.
+
+--- @prop Connected boolean
+--- @within Connection
+--- @readonly
+--- A boolean which determines whether the Connection is currently active.
 
 local Signal = require(script.Signal)
 
@@ -190,6 +236,52 @@ function Replication.new(Player, Object, RaycastParameters, Caster)
 	}, ReplicationBase)
 end
 
+--[=[
+	@class ClientCaster
+
+	An object which handles raycasting and client-communication.
+]=]
+
+--- @prop RaycastParams RaycastParams
+--- @within ClientCaster
+--- @readonly
+--- Returns the ClientCaster's set RaycastParams.
+
+--- @prop Debug boolean
+--- @within ClientCaster
+--- @readonly
+--- Returns whether the ClientCaster object has debug mode enabled, visualizing the ClientCaster's rays.
+
+--- @prop Recursive boolean
+--- @within ClientCaster
+--- @readonly
+--- Determines whether the Caster object will search for Raycast points (DmgPoints) from the whole object's descendants, rather then the object's direct children.
+
+--- @prop Object Instance
+--- @within ClientCaster
+--- @readonly
+--- Returns the object that the ClientCaster is raycasting from.
+
+--- @prop Owner Player?
+--- @within ClientCaster
+--- @readonly
+--- Returns the current Player who is the owner of the caster, or nil in case of the server. The owner calculates intersections, and as such it's recommended to have the client calculate it to have less of a burden on the server.
+
+--- @prop Disabled boolean
+--- @within ClientCaster
+--- @readonly
+--- Returns whether the ClientCaster is disabled (not raycasting).
+
+--- @prop Collided Signal<RaycastResult>
+--- Fires whenever any object intersects any one of the ClientCaster's rays.
+--- @within ClientCaster
+--- @tag Events
+
+--- @prop HumanoidCollided Signal<RaycastResult, Humanoid>
+--- Fires whenever any of the ClientCaster's rays intersect with an object, whose ancestor Model has a Humanoid object.
+--- @within ClientCaster
+--- @tag Events
+
 local ClientCaster = {}
 
 local TrailTransparency = NumberSequence.new({
@@ -199,6 +291,9 @@ local TrailTransparency = NumberSequence.new({
 })
 local AttachmentOffset = Vector3.new(0, 0, 0.1)
 
+--[=[
+	Disables the debug trails of the ClientCaster.
+]=]
 function ClientCaster:DisableDebug()
 	local ReplicationConnection = self._ReplicationConnection
 
@@ -213,6 +308,9 @@ function ClientCaster:DisableDebug()
 		Trail.Enabled = false
 	end
 end
+--[=[
+	Starts the debug trails of the ClientCaster.
+]=]
 function ClientCaster:StartDebug()
 	local ReplicationConnection = self._ReplicationConnection
 
@@ -233,6 +331,9 @@ local CollisionBaseName = {
 	HumanoidCollided = "Humanoid",
 }
 
+--[=[
+	Starts this ClientCaster object, beginning to raycast for the hit detection.
+]=]
 function ClientCaster:Start()
 	self.Disabled = false
 
@@ -248,6 +349,9 @@ function ClientCaster:Start()
 		self:StartDebug()
 	end
 end
+--[=[
+	Destroys this ClientCaster object, cleaning up any remnant connections.
+]=]
 function ClientCaster:Destroy()
 	local ReplicationConn = self._ReplicationConnection
 	if ReplicationConn then
@@ -281,6 +385,9 @@ function ClientCaster:Destroy()
 		end
 	end
 end
+--[=[
+	Stops this ClientCaster object, stopping raycasts for hit detection.
+]=]
 function ClientCaster:Stop()
 	local OldConn = self._ReplicationConnection
 	if OldConn then
@@ -294,6 +401,10 @@ function ClientCaster:Stop()
 	self:DisableDebug()
 	self._Debug = LocalizedState
 end
+--[=[
+	Sets the given Player as owner for this caster object. When NewOwner is nil, the server will be the owner instead of a Player.
+	@param NewOwner Player
+]=]
 function ClientCaster:SetOwner(NewOwner)
 	IsValidOwner(NewOwner)
 	local OldConnection = self._ReplicationConnection
@@ -311,9 +422,19 @@ function ClientCaster:SetOwner(NewOwner)
 		end
 	end
 end
+--[=[
+	Returns the current Player who is the owner of the caster, or nil in case of the server. The owner calculates intersections, and
+	as such it's recommended to have the client calculate it to have less of a burden on the server.
+	@return Player?
+]=]
 function ClientCaster:GetOwner()
 	return self.Owner
 end
+--[=[
+	Determines how long the ClientCaster:GetPing() method can yield for before resuming, to protect against potential exploiting.
+	Default exhaustion time is 1.
+	@param Time number
+]=]
 function ClientCaster:SetMaxPingExhaustion(Time)
 	AssertType(Time, "number", "Unexpected argument #1 to 'ClientCaster.SetMaxPingExhaustion' (%s expected, got %s)")
 	AssertNaN(Time, "Unexpected argument #1 to 'ClientCaster.SetMaxPingExhaustion' (%s expected, got NaN)")
@@ -324,9 +445,19 @@ function ClientCaster:SetMaxPingExhaustion(Time)
 
 	self._ExhaustionTime = Time
 end
+--[=[
+	Returns how long the ClientCaster:GetPing() method can yield before resuming.
+	@return number
+]=]
 function ClientCaster:GetMaxPingExhaustion()
 	return self._ExhaustionTime
 end
+--[=[
+	If the ClientCaster object has a set Owner, it will return the ping of that player by calculating delay between client-server.
+	NOTE This is a yielding function, and it will yield until it gets the players ping.
+	@return number
+	@yields
+]=]
 function ClientCaster:GetPing()
 	if self.Owner == nil then
 		return 0
@@ -334,6 +465,10 @@ function ClientCaster:GetPing()
 
 	return SafeRemoteInvoke(PingRemote, self.Owner, self._ExhaustionTime)
 end
+--[=[
+	Sets this ClientCaster's object which it will raycast from to Object.
+	@param Object Instance
+]=]
 function ClientCaster:SetObject(Object)
 	self.Object = Object
 
@@ -363,9 +498,17 @@ function ClientCaster:SetObject(Object)
 		})
 	end
 end
+--[=[
+	Returns the object this ClientCaster is raycasting from.
+	@return Instance
+]=]
 function ClientCaster:GetObject()
 	return self.Object
 end
+--[=[
+	Updates the ClientCaster's RaycastParams property.
+	@param RaycastParameters RaycastParams
+]=]
 function ClientCaster:EditRaycastParams(RaycastParameters)
 	self.RaycastParams = RaycastParameters
 	local ReplicationConnection = self._ReplicationConnection
@@ -375,14 +518,19 @@ function ClientCaster:EditRaycastParams(RaycastParameters)
 		})
 	end
 end
-function ClientCaster:SetRecursive(Bool)
-	AssertType(Bool, "boolean", "Unexpected argument #1 to 'ClientCaster.SetRecursive' (%s expected, got %s)")
-	self.Recursive = Bool
+--[=[
+	when set to true, the ClientCasterobject will search for Raycast points (DmgPoints) from the whole Object's descendants, rather then the Object's direct children.
+	Useful for whole model hitboxes and characters.
+	@param Recursive boolean
+]=]
+function ClientCaster:SetRecursive(Recursive)
+	AssertType(Recursive, "boolean", "Unexpected argument #1 to 'ClientCaster.SetRecursive' (%s expected, got %s)")
+	self.Recursive = Recursive
 
 	local ReplicationConnection = self._ReplicationConnection
 	if ReplicationConnection then
 		ReplicationConnection:Update({
-			Recursive = Bool,
+			Recursive = Recursive,
 		})
 	end
 end
@@ -403,6 +551,14 @@ local function GenerateId()
 	UniqueId += 1
 	return UniqueId
 end
+
+--[=[
+	@param Object Instance
+	@param RaycastParameters RaycastParams
+	@param NetworkOwner Player
+
+	@return ClientCaster
+]=]
 function ClientCast.new(Object, RaycastParameters, NetworkOwner)
 	AssertType(Object, "Instance", "Unexpected argument #2 to 'ClientCast.new' (%s expected, got %s)")
 	AssertType(RaycastParameters, "RaycastParams", "Unexpected argument #3 to 'ClientCast.new' (%s expected, got %s)")
