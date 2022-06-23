@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="generator" content="Docusaurus v2.0.0-beta.9">
+<title data-react-helmet="true">ClientCaster | ClientCast</title><meta data-react-helmet="true" property="og:title" content="ClientCaster | ClientCast"><meta data-react-helmet="true" name="twitter:card" content="summary_large_image"><meta data-react-helmet="true" name="description" content="An object which handles raycasting and client-communication."><meta data-react-helmet="true" property="og:description" content="An object which handles raycasting and client-communication."><meta data-react-helmet="true" property="og:url" content="https://PysephWasntAvailable.github.io/ClientCast/api/ClientCaster"><meta data-react-helmet="true" name="docusaurus_locale" content="en"><meta data-react-helmet="true" name="docusaurus_tag" content="default"><link data-react-helmet="true" rel="canonical" href="https://PysephWasntAvailable.github.io/ClientCast/api/ClientCaster"><link data-react-helmet="true" rel="alternate" href="https://PysephWasntAvailable.github.io/ClientCast/api/ClientCaster" hreflang="en"><link data-react-helmet="true" rel="alternate" href="https://PysephWasntAvailable.github.io/ClientCast/api/ClientCaster" hreflang="x-default"><link rel="stylesheet" href="/ClientCast/assets/css/styles.06f234af.css">
+<link rel="preload" href="/ClientCast/assets/js/runtime~main.9431ebc8.js" as="script">
+<link rel="preload" href="/ClientCast/assets/js/main.515d2072.js" as="script">
+</head>
+<body>
+<script>!function(){function e(e){document.documentElement.setAttribute("data-theme",e)}var t=function(){var e=null;try{e=localStorage.getItem("theme")}catch(e){}return e}();null!==t?e(t):window.matchMedia("(prefers-color-scheme: dark)").matches?e("dark"):(window.matchMedia("(prefers-color-scheme: light)").matches,e("light"))}()</script><div id="__docusaurus">
+<div><a href="#" class="skipToContent_1oUP">Skip to main content</a></div><nav class="navbar navbar--fixed-top"><div class="navbar__inner"><div class="navbar__items"><button aria-label="Navigation bar toggle" class="navbar__toggle clean-btn" type="button" tabindex="0"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"></path></svg></button><a class="navbar__brand" href="/ClientCast/"><b class="navbar__title">ClientCast</b></a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/ClientCast/api/">API</a></div><div class="navbar__items navbar__items--right"><a href="https://github.com/PysephWasntAvailable/ClientCast" target="_blank" rel="noopener noreferrer" class="navbar__item navbar__link"><span>GitHub<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_3J9K"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></span></a><div class="toggle_71bT toggle_3Zt9 toggleDisabled_3cF-"><div class="toggleTrack_32Fl" role="button" tabindex="-1"><div class="toggleTrackCheck_3lV7"><span class="toggleIcon_O4iE">🌜</span></div><div class="toggleTrackX_S2yS"><span class="toggleIcon_O4iE">🌞</span></div><div class="toggleTrackThumb_xI_Z"></div></div><input type="checkbox" class="toggleScreenReader_28Tw" aria-label="Switch between dark and light mode"></div><div class="navbar__search"><span aria-label="expand searchbar" role="button" class="search-icon" tabindex="0"></span><input type="search" id="search_input_react" placeholder="Press S to Search..." aria-label="Search" class="navbar__search-input search-bar"></div></div></div><div role="presentation" class="navbar-sidebar__backdrop"></div></nav><div class="main-wrapper docPageContainer_2Kz0"><div class="docPage_1bdk"><div class="docSidebarContainer_1ykS"><div class="sidebar_15mo"><nav class="menu thin-scrollbar menu_Bmed"><ul class="theme-doc-sidebar-menu menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/ClientCast/api/ClientCast">​Client​Cast</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link menu__link--active" aria-current="page" href="/ClientCast/api/ClientCaster">​Client​Caster</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/ClientCast/api/Connection">​Connection</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/ClientCast/api/Signal">​Signal</a></li></ul></nav><button type="button" title="Collapse sidebar" aria-label="Collapse sidebar" class="button button--secondary button--outline collapseSidebarButton_1CGd"><svg width="20" height="20" aria-hidden="true" class="collapseSidebarButtonIcon_3E-R"><g fill="#7a7a7a"><path d="M9.992 10.023c0 .2-.062.399-.172.547l-4.996 7.492a.982.982 0 01-.828.454H1c-.55 0-1-.453-1-1 0-.2.059-.403.168-.551l4.629-6.942L.168 3.078A.939.939 0 010 2.528c0-.548.45-.997 1-.997h2.996c.352 0 .649.18.828.45L9.82 9.472c.11.148.172.347.172.55zm0 0"></path><path d="M19.98 10.023c0 .2-.058.399-.168.547l-4.996 7.492a.987.987 0 01-.828.454h-3c-.547 0-.996-.453-.996-1 0-.2.059-.403.168-.551l4.625-6.942-4.625-6.945a.939.939 0 01-.168-.55 1 1 0 01.996-.997h3c.348 0 .649.18.828.45l4.996 7.492c.11.148.168.347.168.55zm0 0"></path></g></svg></button></div></div><main class="docMainContainer_28N5"><div class="container padding-vert--lg"><div class="row"><div class="col docItemCol_3WPG"><div class="docItemContainer_3XDu"><article><div class="member_qHIL markdown"><div class="tocCollapsible_1PrD theme-doc-toc-mobile tocMobile_3ryM"><button type="button" class="clean-btn tocCollapsibleButton_2O1e">On this page</button></div><header><h1 class="docTitle_1ddc" style="text-decoration:none"><span style="display:inline-block">Client</span><span style="display:inline-block">Caster</span></h1><div class="luaClassTags_2Zrs"></div><div>
+<p>An object which handles raycasting and client-communication.</p>
+</div></header><h2 class="anchor anchorWithStickyNavbar_31ik" id="properties">Properties<a aria-hidden="true" class="hash-link" href="#properties" title="Direct link to heading">​</a></h2><div class="divider_3z1R"></div><h3 class="anchor anchorWithStickyNavbar_31ik" id="RaycastParams"><code style="text-decoration:none">RaycastParams</code><a aria-hidden="true" class="hash-link" href="#RaycastParams" title="Direct link to heading">​</a></h3><span class="badge_3ZFo" style="color:#e74c3c"><span class="badgeTooltip_2qiw">This item is read only and cannot be modified.</span><span class="badgeToolTipTail_2yaQ"><svg xmlns="http://www.w3.org/2000/svg" height="300px" width="300px" fill="#e74c3c" x="0px" y="0px" viewBox="0 0 96 96"><path d="M70.354,15.662h-7.496H25.566c-3.282,0-5.19-0.776-5.728-1.169v-1.456c0.538-0.393,2.445-1.168,5.728-1.168h46.479V8H25.566  c-4.776,0-9.594,1.468-9.594,4.747v61.458C15.972,86.645,20.328,88,37.495,88h42.535V15.662H70.354z"></path></svg> <!-- -->Read Only</span></span><div class="repositoryDetailsContainer_1UH0"><a class="sourceButton_2aE5" href="https://github.com/PysephWasntAvailable/ClientCast/blob/master/lib/init.lua#L249"><div class="sourceButtonText_monK">&lt;/&gt;</div></a></div><div class="memberString_P8-X"><code>ClientCaster<!-- -->.<!-- -->RaycastParams<!-- -->:<!-- --> </code> <code class="blue_2Afy">RaycastParams</code></div><div>
+<p>Returns the ClientCaster's set RaycastParams.</p>
+</div><div class="divider_3z1R"></div><h3 class="anchor anchorWithStickyNavbar_31ik" id="Debug"><code style="text-decoration:none">Debug</code><a aria-hidden="true" class="hash-link" href="#Debug" title="Direct link to heading">​</a></h3><span class="badge_3ZFo" style="color:#e74c3c"><span class="badgeTooltip_2qiw">This item is read only and cannot be modified.</span><span class="badgeToolTipTail_2yaQ"><svg xmlns="http://www.w3.org/2000/svg" height="300px" width="300px" fill="#e74c3c" x="0px" y="0px" viewBox="0 0 96 96"><path d="M70.354,15.662h-7.496H25.566c-3.282,0-5.19-0.776-5.728-1.169v-1.456c0.538-0.393,2.445-1.168,5.728-1.168h46.479V8H25.566  c-4.776,0-9.594,1.468-9.594,4.747v61.458C15.972,86.645,20.328,88,37.495,88h42.535V15.662H70.354z"></path></svg> <!-- -->Read Only</span></span><div class="repositoryDetailsContainer_1UH0"><a class="sourceButton_2aE5" href="https://github.com/PysephWasntAvailable/ClientCast/blob/master/lib/init.lua#L254"><div class="sourceButtonText_monK">&lt;/&gt;</div></a></div><div class="memberString_P8-X"><code>ClientCaster<!-- -->.<!-- -->Debug<!-- -->:<!-- --> </code> <code class="blue_2Afy">boolean</code></div><div>
+<p>Returns whether the ClientCaster object has debug mode enabled, visualizing the ClientCaster's rays.</p>
+</div><div class="divider_3z1R"></div><h3 class="anchor anchorWithStickyNavbar_31ik" id="Recursive"><code style="text-decoration:none">Recursive</code><a aria-hidden="true" class="hash-link" href="#Recursive" title="Direct link to heading">​</a></h3><span class="badge_3ZFo" style="color:#e74c3c"><span class="badgeTooltip_2qiw">This item is read only and cannot be modified.</span><span class="badgeToolTipTail_2yaQ"><svg xmlns="http://www.w3.org/2000/svg" height="300px" width="300px" fill="#e74c3c" x="0px" y="0px" viewBox="0 0 96 96"><path d="M70.354,15.662h-7.496H25.566c-3.282,0-5.19-0.776-5.728-1.169v-1.456c0.538-0.393,2.445-1.168,5.728-1.168h46.479V8H25.566  c-4.776,0-9.594,1.468-9.594,4.747v61.458C15.972,86.645,20.328,88,37.495,88h42.535V15.662H70.354z"></path></svg> <!-- -->Read Only</span></span><div class="repositoryDetailsContainer_1UH0"><a class="sourceButton_2aE5" href="https://github.com/PysephWasntAvailable/ClientCast/blob/master/lib/init.lua#L259"><div class="sourceButtonText_monK">&lt;/&gt;</div></a></div><div class="memberString_P8-X"><code>ClientCaster<!-- -->.<!-- -->Recursive<!-- -->:<!-- --> </code> <code class="blue_2Afy">boolean</code></div><div>
+<p>Determines whether the Caster object will search for Raycast points (DmgPoints) from the whole object's descendants, rather then the object's direct children.</p>
+</div><div class="divider_3z1R"></div><h3 class="anchor anchorWithStickyNavbar_31ik" id="Object"><code style="text-decoration:none">Object</code><a aria-hidden="true" class="hash-link" href="#Object" title="Direct link to heading">​</a></h3><span class="badge_3ZFo" style="color:#e74c3c"><span class="badgeTooltip_2qiw">This item is read only and cannot be modified.</span><span class="badgeToolTipTail_2yaQ"><svg xmlns="http://www.w3.org/2000/svg" height="300px" width="300px" fill="#e74c3c" x="0px" y="0px" viewBox="0 0 96 96"><path d="M70.354,15.662h-7.496H25.566c-3.282,0-5.19-0.776-5.728-1.169v-1.456c0.538-0.393,2.445-1.168,5.728-1.168h46.479V8H25.566  c-4.776,0-9.594,1.468-9.594,4.747v61.458C15.972,86.645,20.328,88,37.495,88h42.535V15.662H70.354z"></path></svg> <!-- -->Read Only</span></span><div class="repositoryDetailsContainer_1UH0"><a class="sourceButton_2aE5" href="https://github.com/PysephWasntAvailable/ClientCast/blob/master/lib/init.lua#L264"><div class="sourceButtonText_monK">&lt;/&gt;</div></a></div><div class="memberString_P8-X"><code>ClientCaster<!-- -->.<!-- -->Object<!-- -->:<!-- --> </code> <code class="blue_2Afy"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/Instance" target="_blank" rel="noopener noreferrer">Instance<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code></div><div>
+<p>Returns the object that the ClientCaster is raycasting from.</p>
+</div><div class="divider_3z1R"></div><h3 class="anchor anchorWithStickyNavbar_31ik" id="Owner"><code style="text-decoration:none">Owner</code><a aria-hidden="true" class="hash-link" href="#Owner" title="Direct link to heading">​</a></h3><span class="badge_3ZFo" style="color:#e74c3c"><span class="badgeTooltip_2qiw">This item is read only and cannot be modified.</span><span class="badgeToolTipTail_2yaQ"><svg xmlns="http://www.w3.org/2000/svg" height="300px" width="300px" fill="#e74c3c" x="0px" y="0px" viewBox="0 0 96 96"><path d="M70.354,15.662h-7.496H25.566c-3.282,0-5.19-0.776-5.728-1.169v-1.456c0.538-0.393,2.445-1.168,5.728-1.168h46.479V8H25.566  c-4.776,0-9.594,1.468-9.594,4.747v61.458C15.972,86.645,20.328,88,37.495,88h42.535V15.662H70.354z"></path></svg> <!-- -->Read Only</span></span><div class="repositoryDetailsContainer_1UH0"><a class="sourceButton_2aE5" href="https://github.com/PysephWasntAvailable/ClientCast/blob/master/lib/init.lua#L269"><div class="sourceButtonText_monK">&lt;/&gt;</div></a></div><div class="memberString_P8-X"><code>ClientCaster<!-- -->.<!-- -->Owner<!-- -->:<!-- --> </code> <code class="blue_2Afy"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/Player" target="_blank" rel="noopener noreferrer">Player?<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code></div><div>
+<p>Returns the current Player who is the owner of the caster, or nil in case of the server. The owner calculates intersections, and as such it's recommended to have the client calculate it to have less of a burden on the server.</p>
+</div><div class="divider_3z1R"></div><h3 class="anchor anchorWithStickyNavbar_31ik" id="Disabled"><code style="text-decoration:none">Disabled</code><a aria-hidden="true" class="hash-link" href="#Disabled" title="Direct link to heading">​</a></h3><span class="badge_3ZFo" style="color:#e74c3c"><span class="badgeTooltip_2qiw">This item is read only and cannot be modified.</span><span class="badgeToolTipTail_2yaQ"><svg xmlns="http://www.w3.org/2000/svg" height="300px" width="300px" fill="#e74c3c" x="0px" y="0px" viewBox="0 0 96 96"><path d="M70.354,15.662h-7.496H25.566c-3.282,0-5.19-0.776-5.728-1.169v-1.456c0.538-0.393,2.445-1.168,5.728-1.168h46.479V8H25.566  c-4.776,0-9.594,1.468-9.594,4.747v61.458C15.972,86.645,20.328,88,37.495,88h42.535V15.662H70.354z"></path></svg> <!-- -->Read Only</span></span><div class="repositoryDetailsContainer_1UH0"><a class="sourceButton_2aE5" href="https://github.com/PysephWasntAvailable/ClientCast/blob/master/lib/init.lua#L274"><div class="sourceButtonText_monK">&lt;/&gt;</div></a></div><div class="memberString_P8-X"><code>ClientCaster<!-- -->.<!-- -->Disabled<!-- -->:<!-- --> </code> <code class="blue_2Afy">boolean</code></div><div>
+<p>Returns whether the ClientCaster is disabled (not raycasting).</p>
+</div><div class="divider_3z1R"></div><h3 class="anchor anchorWithStickyNavbar_31ik" id="Collided"><code style="text-decoration:none">Collided</code><a aria-hidden="true" class="hash-link" href="#Collided" title="Direct link to heading">​</a></h3><span class="docTag_3qMS" style="border-color:#925FB9;color:#925FB9">Events</span><div class="repositoryDetailsContainer_1UH0"><a class="sourceButton_2aE5" href="https://github.com/PysephWasntAvailable/ClientCast/blob/master/lib/init.lua#L279"><div class="sourceButtonText_monK">&lt;/&gt;</div></a></div><div class="memberString_P8-X"><code>ClientCaster<!-- -->.<!-- -->Collided<!-- -->:<!-- --> </code> <code class="blue_2Afy"><a style="text-decoration:underline;color:inherit" href="/ClientCast/api/Signal">Signal</a></code></div><div>
+<p>Fires whenever any object intersects any one of the ClientCaster's rays.</p>
+</div><div class="divider_3z1R"></div><h3 class="anchor anchorWithStickyNavbar_31ik" id="HumanoidCollided"><code style="text-decoration:none">HumanoidCollided</code><a aria-hidden="true" class="hash-link" href="#HumanoidCollided" title="Direct link to heading">​</a></h3><span class="docTag_3qMS" style="border-color:#925FB9;color:#925FB9">Events</span><div class="repositoryDetailsContainer_1UH0"><a class="sourceButton_2aE5" href="https://github.com/PysephWasntAvailable/ClientCast/blob/master/lib/init.lua#L284"><div class="sourceButtonText_monK">&lt;/&gt;</div></a></div><div class="memberString_P8-X"><code>ClientCaster<!-- -->.<!-- -->HumanoidCollided<!-- -->:<!-- --> </code> <code class="blue_2Afy"><a style="text-decoration:underline;color:inherit" href="/ClientCast/api/Signal">Signal</a></code></div><div>
+<p>Fires whenever any of the ClientCaster's rays intersect with an object, whose ancestor Model has a Humanoid object.</p>
+</div><h2 class="anchor anchorWithStickyNavbar_31ik" id="functions">Functions<a aria-hidden="true" class="hash-link" href="#functions" title="Direct link to heading">​</a></h2><div class="divider_3z1R"></div><h3 class="anchor anchorWithStickyNavbar_31ik" id="DisableDebug"><code style="text-decoration:none">DisableDebug</code><a aria-hidden="true" class="hash-link" href="#DisableDebug" title="Direct link to heading">​</a></h3><div class="repositoryDetailsContainer_1UH0"><a class="sourceButton_2aE5" href="https://github.com/PysephWasntAvailable/ClientCast/blob/master/lib/init.lua#L297"><div class="sourceButtonText_monK">&lt;/&gt;</div></a></div><div class="memberString_P8-X"><code>ClientCaster<!-- -->:</code><code class="green_3LnD">DisableDebug</code><code>(</code><code>) → </code><code>(</code><code>)</code></div><div>
+<p>Disables the debug trails of the ClientCaster.</p>
+</div><div class="divider_3z1R"></div><h3 class="anchor anchorWithStickyNavbar_31ik" id="StartDebug"><code style="text-decoration:none">StartDebug</code><a aria-hidden="true" class="hash-link" href="#StartDebug" title="Direct link to heading">​</a></h3><div class="repositoryDetailsContainer_1UH0"><a class="sourceButton_2aE5" href="https://github.com/PysephWasntAvailable/ClientCast/blob/master/lib/init.lua#L314"><div class="sourceButtonText_monK">&lt;/&gt;</div></a></div><div class="memberString_P8-X"><code>ClientCaster<!-- -->:</code><code class="green_3LnD">StartDebug</code><code>(</code><code>) → </code><code>(</code><code>)</code></div><div>
+<p>Starts the debug trails of the ClientCaster.</p>
+</div><div class="divider_3z1R"></div><h3 class="anchor anchorWithStickyNavbar_31ik" id="Start"><code style="text-decoration:none">Start</code><a aria-hidden="true" class="hash-link" href="#Start" title="Direct link to heading">​</a></h3><div class="repositoryDetailsContainer_1UH0"><a class="sourceButton_2aE5" href="https://github.com/PysephWasntAvailable/ClientCast/blob/master/lib/init.lua#L337"><div class="sourceButtonText_monK">&lt;/&gt;</div></a></div><div class="memberString_P8-X"><code>ClientCaster<!-- -->:</code><code class="green_3LnD">Start</code><code>(</code><code>) → </code><code>(</code><code>)</code></div><div>
+<p>Starts this ClientCaster object, beginning to raycast for the hit detection.</p>
+</div><div class="divider_3z1R"></div><h3 class="anchor anchorWithStickyNavbar_31ik" id="Destroy"><code style="text-decoration:none">Destroy</code><a aria-hidden="true" class="hash-link" href="#Destroy" title="Direct link to heading">​</a></h3><div class="repositoryDetailsContainer_1UH0"><a class="sourceButton_2aE5" href="https://github.com/PysephWasntAvailable/ClientCast/blob/master/lib/init.lua#L355"><div class="sourceButtonText_monK">&lt;/&gt;</div></a></div><div class="memberString_P8-X"><code>ClientCaster<!-- -->:</code><code class="green_3LnD">Destroy</code><code>(</code><code>) → </code><code>(</code><code>)</code></div><div>
+<p>Destroys this ClientCaster object, cleaning up any remnant connections.</p>
+</div><div class="divider_3z1R"></div><h3 class="anchor anchorWithStickyNavbar_31ik" id="Stop"><code style="text-decoration:none">Stop</code><a aria-hidden="true" class="hash-link" href="#Stop" title="Direct link to heading">​</a></h3><div class="repositoryDetailsContainer_1UH0"><a class="sourceButton_2aE5" href="https://github.com/PysephWasntAvailable/ClientCast/blob/master/lib/init.lua#L391"><div class="sourceButtonText_monK">&lt;/&gt;</div></a></div><div class="memberString_P8-X"><code>ClientCaster<!-- -->:</code><code class="green_3LnD">Stop</code><code>(</code><code>) → </code><code>(</code><code>)</code></div><div>
+<p>Stops this ClientCaster object, stopping raycasts for hit detection.</p>
+</div><div class="divider_3z1R"></div><h3 class="anchor anchorWithStickyNavbar_31ik" id="SetOwner"><code style="text-decoration:none">SetOwner</code><a aria-hidden="true" class="hash-link" href="#SetOwner" title="Direct link to heading">​</a></h3><div class="repositoryDetailsContainer_1UH0"><a class="sourceButton_2aE5" href="https://github.com/PysephWasntAvailable/ClientCast/blob/master/lib/init.lua#L408"><div class="sourceButtonText_monK">&lt;/&gt;</div></a></div><div class="memberString_P8-X"><code>ClientCaster<!-- -->:</code><code class="green_3LnD">SetOwner</code><code>(</code><code>NewOwner<!-- -->: </code><code class="blue_2Afy"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/Player" target="_blank" rel="noopener noreferrer">Player<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><code>) → </code><code>(</code><code>)</code></div><div>
+<p>Sets the given Player as owner for this caster object. When NewOwner is nil, the server will be the owner instead of a Player.</p>
+</div><div class="divider_3z1R"></div><h3 class="anchor anchorWithStickyNavbar_31ik" id="GetOwner"><code style="text-decoration:none">GetOwner</code><a aria-hidden="true" class="hash-link" href="#GetOwner" title="Direct link to heading">​</a></h3><div class="repositoryDetailsContainer_1UH0"><a class="sourceButton_2aE5" href="https://github.com/PysephWasntAvailable/ClientCast/blob/master/lib/init.lua#L430"><div class="sourceButtonText_monK">&lt;/&gt;</div></a></div><div class="memberString_P8-X"><code>ClientCaster<!-- -->:</code><code class="green_3LnD">GetOwner</code><code>(</code><code>) → </code><code class="blue_2Afy"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/class/Player" target="_blank" rel="noopener noreferrer">Player?<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code></div><div>
+<p>
+  Returns the current Player who is the owner of the caster, or nil in case of the server. The owner calculates intersections, and
+  as such it's recommended to have the client calculate it to have less of a burden on the server.
+</p>
+</div><div class="divider_3z1R"></div><h3 class="anchor anchorWithStickyNavbar_31ik" id="SetMaxPingExhaustion"><code style="text-decoration:none">SetMaxPingExhaustion</code><a aria-hidden="true" class="hash-link" href="#SetMaxPingExhaustion" title="Direct link to heading">​</a></h3><div class="repositoryDetailsContainer_1UH0"><a class="sourceButton_2aE5" href="https://github.com/PysephWasntAvailable/ClientCast/blob/master/lib/init.lua#L438"><div class="sourceButtonText_monK">&lt;/&gt;</div></a></div><div class="memberString_P8-X"><code>ClientCaster<!-- -->:</code><code class="green_3LnD">SetMaxPingExhaustion</code><code>(</code><code>Time<!-- -->: </code><code class="blue_2Afy">number</code><code>) → </code><code>(</code><code>)</code></div><div>
+<p>
+  Determines how long the ClientCaster:GetPing() method can yield for before resuming, to protect against potential exploiting.
+  Default exhaustion time is 1.
+</p>
+</div><div class="divider_3z1R"></div><h3 class="anchor anchorWithStickyNavbar_31ik" id="GetMaxPingExhaustion"><code style="text-decoration:none">GetMaxPingExhaustion</code><a aria-hidden="true" class="hash-link" href="#GetMaxPingExhaustion" title="Direct link to heading">​</a></h3><div class="repositoryDetailsContainer_1UH0"><a class="sourceButton_2aE5" href="https://github.com/PysephWasntAvailable/ClientCast/blob/master/lib/init.lua#L452"><div class="sourceButtonText_monK">&lt;/&gt;</div></a></div><div class="memberString_P8-X"><code>ClientCaster<!-- -->:</code><code class="green_3LnD">GetMaxPingExhaustion</code><code>(</code><code>) → </code><code class="blue_2Afy">number</code></div><div>
+<p>Returns how long the ClientCaster:GetPing() method can yield before resuming.</p>
+</div><div class="divider_3z1R"></div><h3 class="anchor anchorWithStickyNavbar_31ik" id="GetPing"><code style="text-decoration:none">GetPing</code><a aria-hidden="true" class="hash-link" href="#GetPing" title="Direct link to heading">​</a></h3><span class="badge_3ZFo" style="color:#f1c40f"><span class="badgeTooltip_2qiw">This is a yielding function. When called, it will pause the Lua thread that called the function until a result is ready to be returned, without interrupting other scripts.</span><span class="badgeToolTipTail_2yaQ"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="#f1c40f" role="img" aria-label="This is a yielding function. When called, it will pause the Lua thread that called the function until a result is ready to be returned, without interrupting other scripts."><path d="M96.4 11.9c-1.4-2.5-4-4-6.9-4H10.8c-2.9 0-5.4 1.5-6.9 4-1.4 2.5-1.4 5.5 0 7.9L43.3 88c1.4 2.5 4 4 6.9 4 2.9 0 5.4-1.5 6.9-4l39.3-68.2c1.4-2.4 1.4-5.4 0-7.9zM46.3 54.5c1.1-1.1 2.3-1.6 3.8-1.6s2.8.5 3.8 1.6c1.1 1.1 1.6 2.3 1.6 3.8s-.5 2.8-1.6 3.8c-1.1 1.1-2.3 1.6-3.8 1.6s-2.8-.5-3.8-1.6c-1.1-1.1-1.6-2.3-1.6-3.8.1-1.5.6-2.8 1.6-3.8zm-.5-4.9V21.8h8.8v27.8h-8.8z"></path></svg> <!-- -->Yields</span></span><div class="repositoryDetailsContainer_1UH0"><a class="sourceButton_2aE5" href="https://github.com/PysephWasntAvailable/ClientCast/blob/master/lib/init.lua#L461"><div class="sourceButtonText_monK">&lt;/&gt;</div></a></div><div class="memberString_P8-X"><code>ClientCaster<!-- -->:</code><code class="green_3LnD">GetPing</code><code>(</code><code>) → </code><code class="blue_2Afy">number</code></div><div>
+<p>
+  If the ClientCaster object has a set Owner, it will return the ping of that player by calculating delay between client-server.
+  NOTE This is a yielding function, and it will yield until it gets the players ping.
+</p>
+</div><div class="divider_3z1R"></div><h3 class="anchor anchorWithStickyNavbar_31ik" id="SetObject"><code style="text-decoration:none">SetObject</code><a aria-hidden="true" class="hash-link" href="#SetObject" title="Direct link to heading">​</a></h3><div class="repositoryDetailsContainer_1UH0"><a class="sourceButton_2aE5" href="https://github.com/PysephWasntAvailable/ClientCast/blob/master/lib/init.lua#L472"><div class="sourceButtonText_monK">&lt;/&gt;</div></a></div><div class="memberString_P8-X"><code>ClientCaster<!-- -->:</code><code class="green_3LnD">SetObject</code><code>(</code><code>Object<!-- -->: </code><code class="blue_2Afy"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/Instance" target="_blank" rel="noopener noreferrer">Instance<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><code>) → </code><code>(</code><code>)</code></div><div>
+<p>Sets this ClientCaster's object which it will raycast from to Object.</p>
+</div><div class="divider_3z1R"></div><h3 class="anchor anchorWithStickyNavbar_31ik" id="GetObject"><code style="text-decoration:none">GetObject</code><a aria-hidden="true" class="hash-link" href="#GetObject" title="Direct link to heading">​</a></h3><div class="repositoryDetailsContainer_1UH0"><a class="sourceButton_2aE5" href="https://github.com/PysephWasntAvailable/ClientCast/blob/master/lib/init.lua#L505"><div class="sourceButtonText_monK">&lt;/&gt;</div></a></div><div class="memberString_P8-X"><code>ClientCaster<!-- -->:</code><code class="green_3LnD">GetObject</code><code>(</code><code>) → </code><code class="blue_2Afy"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/Instance" target="_blank" rel="noopener noreferrer">Instance<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code></div><div>
+<p>Returns the object this ClientCaster is raycasting from.</p>
+</div><div class="divider_3z1R"></div><h3 class="anchor anchorWithStickyNavbar_31ik" id="EditRaycastParams"><code style="text-decoration:none">EditRaycastParams</code><a aria-hidden="true" class="hash-link" href="#EditRaycastParams" title="Direct link to heading">​</a></h3><div class="repositoryDetailsContainer_1UH0"><a class="sourceButton_2aE5" href="https://github.com/PysephWasntAvailable/ClientCast/blob/master/lib/init.lua#L512"><div class="sourceButtonText_monK">&lt;/&gt;</div></a></div><div class="memberString_P8-X"><code>ClientCaster<!-- -->:</code><code class="green_3LnD">EditRaycastParams</code><code>(</code><code>RaycastParameters<!-- -->: </code><code class="blue_2Afy">RaycastParams</code><code>) → </code><code>(</code><code>)</code></div><div>
+<p>Updates the ClientCaster's RaycastParams property.</p>
+</div><div class="divider_3z1R"></div><h3 class="anchor anchorWithStickyNavbar_31ik" id="SetRecursive"><code style="text-decoration:none">SetRecursive</code><a aria-hidden="true" class="hash-link" href="#SetRecursive" title="Direct link to heading">​</a></h3><div class="repositoryDetailsContainer_1UH0"><a class="sourceButton_2aE5" href="https://github.com/PysephWasntAvailable/ClientCast/blob/master/lib/init.lua#L526"><div class="sourceButtonText_monK">&lt;/&gt;</div></a></div><div class="memberString_P8-X"><code>ClientCaster<!-- -->:</code><code class="green_3LnD">SetRecursive</code><code>(</code><code>Recursive<!-- -->: </code><code class="blue_2Afy">boolean</code><code>) → </code><code>(</code><code>)</code></div><div>
+<p>
+  when set to true, the ClientCasterobject will search for Raycast points (DmgPoints) from the whole Object's descendants, rather then the Object's direct children.
+  Useful for whole model hitboxes and characters.
+</p>
+</div></div></article></div><details><summary>Show raw api</summary><pre style="max-width:100%;white-space:pre-wrap">{
+    &quot;functions&quot;: [
+        {
+            &quot;name&quot;: &quot;DisableDebug&quot;,
+            &quot;desc&quot;: &quot;Disables the debug trails of the ClientCaster.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 297,
+                &quot;path&quot;: &quot;lib/init.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;StartDebug&quot;,
+            &quot;desc&quot;: &quot;Starts the debug trails of the ClientCaster.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 314,
+                &quot;path&quot;: &quot;lib/init.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;Start&quot;,
+            &quot;desc&quot;: &quot;Starts this ClientCaster object, beginning to raycast for the hit detection.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 337,
+                &quot;path&quot;: &quot;lib/init.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;Destroy&quot;,
+            &quot;desc&quot;: &quot;Destroys this ClientCaster object, cleaning up any remnant connections.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 355,
+                &quot;path&quot;: &quot;lib/init.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;Stop&quot;,
+            &quot;desc&quot;: &quot;Stops this ClientCaster object, stopping raycasts for hit detection.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 391,
+                &quot;path&quot;: &quot;lib/init.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;SetOwner&quot;,
+            &quot;desc&quot;: &quot;Sets the given Player as owner for this caster object. When NewOwner is nil, the server will be the owner instead of a Player.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;NewOwner&quot;,
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;Player&quot;
+                }
+            ],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 408,
+                &quot;path&quot;: &quot;lib/init.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;GetOwner&quot;,
+            &quot;desc&quot;: &quot;Returns the current Player who is the owner of the caster, or nil in case of the server. The owner calculates intersections, and\nas such it&#x27;s recommended to have the client calculate it to have less of a burden on the server.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;Player?&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 430,
+                &quot;path&quot;: &quot;lib/init.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;SetMaxPingExhaustion&quot;,
+            &quot;desc&quot;: &quot;Determines how long the ClientCaster:GetPing() method can yield for before resuming, to protect against potential exploiting.\nDefault exhaustion time is 1.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;Time&quot;,
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;number&quot;
+                }
+            ],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 438,
+                &quot;path&quot;: &quot;lib/init.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;GetMaxPingExhaustion&quot;,
+            &quot;desc&quot;: &quot;Returns how long the ClientCaster:GetPing() method can yield before resuming.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;number&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 452,
+                &quot;path&quot;: &quot;lib/init.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;GetPing&quot;,
+            &quot;desc&quot;: &quot;If the ClientCaster object has a set Owner, it will return the ping of that player by calculating delay between client-server.\nNOTE This is a yielding function, and it will yield until it gets the players ping.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;number&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;yields&quot;: true,
+            &quot;source&quot;: {
+                &quot;line&quot;: 461,
+                &quot;path&quot;: &quot;lib/init.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;SetObject&quot;,
+            &quot;desc&quot;: &quot;Sets this ClientCaster&#x27;s object which it will raycast from to Object.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;Object&quot;,
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;Instance&quot;
+                }
+            ],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 472,
+                &quot;path&quot;: &quot;lib/init.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;GetObject&quot;,
+            &quot;desc&quot;: &quot;Returns the object this ClientCaster is raycasting from.&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;Instance&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 505,
+                &quot;path&quot;: &quot;lib/init.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;EditRaycastParams&quot;,
+            &quot;desc&quot;: &quot;Updates the ClientCaster&#x27;s RaycastParams property.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;RaycastParameters&quot;,
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;RaycastParams&quot;
+                }
+            ],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 512,
+                &quot;path&quot;: &quot;lib/init.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;SetRecursive&quot;,
+            &quot;desc&quot;: &quot;when set to true, the ClientCasterobject will search for Raycast points (DmgPoints) from the whole Object&#x27;s descendants, rather then the Object&#x27;s direct children.\nUseful for whole model hitboxes and characters.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;Recursive&quot;,
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;boolean&quot;
+                }
+            ],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;method&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 526,
+                &quot;path&quot;: &quot;lib/init.lua&quot;
+            }
+        }
+    ],
+    &quot;properties&quot;: [
+        {
+            &quot;name&quot;: &quot;RaycastParams&quot;,
+            &quot;desc&quot;: &quot;Returns the ClientCaster&#x27;s set RaycastParams.&quot;,
+            &quot;lua_type&quot;: &quot;RaycastParams&quot;,
+            &quot;readonly&quot;: true,
+            &quot;source&quot;: {
+                &quot;line&quot;: 249,
+                &quot;path&quot;: &quot;lib/init.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;Debug&quot;,
+            &quot;desc&quot;: &quot;Returns whether the ClientCaster object has debug mode enabled, visualizing the ClientCaster&#x27;s rays.&quot;,
+            &quot;lua_type&quot;: &quot;boolean&quot;,
+            &quot;readonly&quot;: true,
+            &quot;source&quot;: {
+                &quot;line&quot;: 254,
+                &quot;path&quot;: &quot;lib/init.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;Recursive&quot;,
+            &quot;desc&quot;: &quot;Determines whether the Caster object will search for Raycast points (DmgPoints) from the whole object&#x27;s descendants, rather then the object&#x27;s direct children.&quot;,
+            &quot;lua_type&quot;: &quot;boolean&quot;,
+            &quot;readonly&quot;: true,
+            &quot;source&quot;: {
+                &quot;line&quot;: 259,
+                &quot;path&quot;: &quot;lib/init.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;Object&quot;,
+            &quot;desc&quot;: &quot;Returns the object that the ClientCaster is raycasting from.&quot;,
+            &quot;lua_type&quot;: &quot;Instance&quot;,
+            &quot;readonly&quot;: true,
+            &quot;source&quot;: {
+                &quot;line&quot;: 264,
+                &quot;path&quot;: &quot;lib/init.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;Owner&quot;,
+            &quot;desc&quot;: &quot;Returns the current Player who is the owner of the caster, or nil in case of the server. The owner calculates intersections, and as such it&#x27;s recommended to have the client calculate it to have less of a burden on the server.&quot;,
+            &quot;lua_type&quot;: &quot;Player?&quot;,
+            &quot;readonly&quot;: true,
+            &quot;source&quot;: {
+                &quot;line&quot;: 269,
+                &quot;path&quot;: &quot;lib/init.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;Disabled&quot;,
+            &quot;desc&quot;: &quot;Returns whether the ClientCaster is disabled (not raycasting).&quot;,
+            &quot;lua_type&quot;: &quot;boolean&quot;,
+            &quot;readonly&quot;: true,
+            &quot;source&quot;: {
+                &quot;line&quot;: 274,
+                &quot;path&quot;: &quot;lib/init.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;Collided&quot;,
+            &quot;desc&quot;: &quot;Fires whenever any object intersects any one of the ClientCaster&#x27;s rays.&quot;,
+            &quot;lua_type&quot;: &quot;Signal&quot;,
+            &quot;tags&quot;: [
+                &quot;Events&quot;
+            ],
+            &quot;source&quot;: {
+                &quot;line&quot;: 279,
+                &quot;path&quot;: &quot;lib/init.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;HumanoidCollided&quot;,
+            &quot;desc&quot;: &quot;Fires whenever any of the ClientCaster&#x27;s rays intersect with an object, whose ancestor Model has a Humanoid object.&quot;,
+            &quot;lua_type&quot;: &quot;Signal&quot;,
+            &quot;tags&quot;: [
+                &quot;Events&quot;
+            ],
+            &quot;source&quot;: {
+                &quot;line&quot;: 284,
+                &quot;path&quot;: &quot;lib/init.lua&quot;
+            }
+        }
+    ],
+    &quot;types&quot;: [],
+    &quot;name&quot;: &quot;ClientCaster&quot;,
+    &quot;desc&quot;: &quot;An object which handles raycasting and client-communication.&quot;,
+    &quot;source&quot;: {
+        &quot;line&quot;: 244,
+        &quot;path&quot;: &quot;lib/init.lua&quot;
+    }
+}</pre></details></div><div class="col col--3"><div class="tableOfContents_35-E thin-scrollbar"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#types" class="table-of-contents__link toc-highlight">Types</a></li><li><a href="#properties" class="table-of-contents__link toc-highlight">Properties</a><ul><li><a href="#Events" class="table-of-contents__link toc-highlight">Events</a><ul><li><a href="#Collided" class="table-of-contents__link toc-highlight">Collided</a></li><li><a href="#HumanoidCollided" class="table-of-contents__link toc-highlight">HumanoidCollided</a></li></ul></li><li><a href="#Debug" class="table-of-contents__link toc-highlight">Debug</a></li><li><a href="#Disabled" class="table-of-contents__link toc-highlight">Disabled</a></li><li><a href="#Object" class="table-of-contents__link toc-highlight">Object</a></li><li><a href="#Owner" class="table-of-contents__link toc-highlight">Owner</a></li><li><a href="#RaycastParams" class="table-of-contents__link toc-highlight">RaycastParams</a></li><li><a href="#Recursive" class="table-of-contents__link toc-highlight">Recursive</a></li></ul></li><li><a href="#functions" class="table-of-contents__link toc-highlight">Functions</a><ul><li><a href="#Destroy" class="table-of-contents__link toc-highlight">:Destroy</a></li><li><a href="#DisableDebug" class="table-of-contents__link toc-highlight">:DisableDebug</a></li><li><a href="#EditRaycastParams" class="table-of-contents__link toc-highlight">:EditRaycastParams</a></li><li><a href="#GetMaxPingExhaustion" class="table-of-contents__link toc-highlight">:GetMaxPingExhaustion</a></li><li><a href="#GetObject" class="table-of-contents__link toc-highlight">:GetObject</a></li><li><a href="#GetOwner" class="table-of-contents__link toc-highlight">:GetOwner</a></li><li><a href="#GetPing" class="table-of-contents__link toc-highlight">:GetPing</a></li><li><a href="#SetMaxPingExhaustion" class="table-of-contents__link toc-highlight">:SetMaxPingExhaustion</a></li><li><a href="#SetObject" class="table-of-contents__link toc-highlight">:SetObject</a></li><li><a href="#SetOwner" class="table-of-contents__link toc-highlight">:SetOwner</a></li><li><a href="#SetRecursive" class="table-of-contents__link toc-highlight">:SetRecursive</a></li><li><a href="#Start" class="table-of-contents__link toc-highlight">:Start</a></li><li><a href="#StartDebug" class="table-of-contents__link toc-highlight">:StartDebug</a></li><li><a href="#Stop" class="table-of-contents__link toc-highlight">:Stop</a></li></ul></li></ul></div></div></div></div></main></div></div><footer class="footer footer--dark"><div class="container"><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2022 PysephWasntAvailable. Built with Moonwave and Docusaurus.</div></div></div></footer></div>
+<script src="/ClientCast/assets/js/runtime~main.9431ebc8.js"></script>
+<script src="/ClientCast/assets/js/main.515d2072.js"></script>
+</body>
+</html>
