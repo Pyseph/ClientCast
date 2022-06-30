@@ -41,6 +41,10 @@ ClientCast.InitiatedCasters = {}
 local RunService = game:GetService("RunService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
+if RunService:IsClient() then
+	error("ClientCast can only be called from the server. Client communication is already handled by the module!")
+end
+
 local ReplicationRemote = ReplicatedStorage:FindFirstChild("ClientCast-Replication")
 local PingRemote = ReplicatedStorage:FindFirstChild("ClientCast-Ping")
 
