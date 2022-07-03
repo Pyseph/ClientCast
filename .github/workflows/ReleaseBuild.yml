@@ -1,5 +1,10 @@
 name: Publish Release
-on: [push]
+on:
+  push:
+      branches:
+        - main
+      tags-ignore:
+        - workflows
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
