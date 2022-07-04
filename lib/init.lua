@@ -344,8 +344,6 @@ function ClientCaster:Start()
 	local ReplicationConn = self._ReplicationConnection
 	if ReplicationConn then
 		ReplicationConn:Start()
-	else
-		warn("No replication connection found")
 	end
 
 	ClientCast.InitiatedCasters[self] = {}
