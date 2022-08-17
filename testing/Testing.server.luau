@@ -3,7 +3,7 @@ local Players = game:GetService("Players")
 
 local TestingPlayer = Players:GetPlayers()[1] or Players.PlayerAdded:Wait()
 
-local ClientCast = require(ReplicatedStorage.ClientCast)
+local ClientCast = require(ReplicatedStorage.ClientCast):: {}
 
 local KillPart = Instance.new("Part")
 KillPart.Anchored = true
