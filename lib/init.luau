@@ -139,9 +139,9 @@ local function IsValid(SerializedResult)
 	end
 
 	return (
-			SerializedResult.Instance ~= nil
-			and (SerializedResult.Instance:IsA("BasePart") or SerializedResult.Instance:IsA("Terrain"))
-		)
+		SerializedResult.Instance ~= nil
+		and (SerializedResult.Instance:IsA("BasePart") or SerializedResult.Instance:IsA("Terrain"))
+	)
 		and IsA(SerializedResult.Position, "Vector3")
 		and IsA(SerializedResult.Material, "EnumItem")
 		and IsA(SerializedResult.Normal, "Vector3")
@@ -181,7 +181,7 @@ function ReplicationBase:Start()
 			end
 
 			for Event in next, self.Caster._CollidedEvents[Code] do
-				Event:Invoke(RaycastResult, Humanoid)
+				Event:Fire(RaycastResult, Humanoid)
 			end
 		end
 	end)
@@ -370,7 +370,7 @@ function ClientCaster:Destroy()
 	end
 	for _, EventsHolder in next, self._CollidedEvents do
 		for Event in next, EventsHolder do
-			Event:Destroy()
+			Event:DisconnectAll()
 		end
 	end
 
@@ -542,7 +542,7 @@ function ClientCaster:__index(Index)
 		local CollisionEvent = Signal.new()
 		self._CollidedEvents[CollisionIndex][CollisionEvent] = true
 
-		return CollisionEvent.Invoked
+		return CollisionEvent
 	end
 
 	return rawget(ClientCaster, Index)
@@ -639,21 +639,22 @@ function ClientCast.new(Object, RaycastParameters, NetworkOwner)
 	end
 
 	CasterObject._DescendantConnection = Object.DescendantAdded:Connect(OnDamagePointAdded)
-	CasterObject._ReplicationConnection = NetworkOwner ~= nil and Replication.new(NetworkOwner, Object, RaycastParameters, CasterObject)
+	CasterObject._ReplicationConnection = NetworkOwner ~= nil
+		and Replication.new(NetworkOwner, Object, RaycastParameters, CasterObject)
 	return CasterObject
 end
 
 local function UpdateCasterEvents(Caster, RaycastResult)
 	if RaycastResult then
 		for CollisionEvent in next, Caster._CollidedEvents.Any do
-			CollisionEvent:Invoke(RaycastResult)
+			CollisionEvent:Fire(RaycastResult)
 		end
 
 		local ModelAncestor = RaycastResult.Instance:FindFirstAncestorOfClass("Model")
 		local Humanoid = ModelAncestor and ModelAncestor:FindFirstChildOfClass("Humanoid")
 		if Humanoid then
 			for HumanoidEvent in next, Caster._CollidedEvents.Humanoid do
-				HumanoidEvent:Invoke(RaycastResult, Humanoid)
+				HumanoidEvent:Fire(RaycastResult, Humanoid)
 			end
 		end
 	end

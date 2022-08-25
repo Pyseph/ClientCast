@@ -126,7 +126,7 @@ function ClientCaster:__index(Index)
 		local CollisionEvent = Signal.new()
 		self._CollidedEvents[CollisionIndex][CollisionEvent] = true
 
-		return CollisionEvent.Invoked
+		return CollisionEvent
 	end
 
 	return rawget(ClientCaster, Index)
