@@ -11,7 +11,7 @@
 --   local Signal = require(THIS MODULE)                                      --
 --   local sig = Signal.new()                                                 --
 --   local connection = sig:Connect(function(arg1, arg2, ...) ... end)        --
---   sig:Invoke(arg1, arg2, ...)                                              --
+--   sig:Fire(arg1, arg2, ...)                                                --
 --   connection:Disconnect()                                                  --
 --   sig:DisconnectAll()                                                      --
 --   local arg1, arg2, ... = sig:Wait()                                       --
@@ -42,8 +42,12 @@ end
 -- Coroutine runner that we create coroutines of. The coroutine can be
 -- repeatedly resumed with functions to run followed by the argument to run
 -- them with.
-local function runEventHandlerInFreeThread(...)
-	acquireRunnerThreadAndCallEventHandler(...)
+local function runEventHandlerInFreeThread()
+	-- Note: We cannot use the initial set of arguments passed to
+	-- runEventHandlerInFreeThread for a call to the handler, because those
+	-- arguments would stay on the stack for the duration of the thread's
+	-- existence, temporarily leaking references. Without access to raw bytecode
+	-- there's no way for us to clear the "..." references from the stack.
 	while true do
 		acquireRunnerThreadAndCallEventHandler(coroutine.yield())
 	end
@@ -63,7 +67,6 @@ function Connection.new(signal, fn)
 end
 
 function Connection:Disconnect()
-	assert(self._connected, "Can't disconnect a connection twice.")
 	self._connected = false
 
 	-- Unhook the node, but DON'T clear it. That way any fire calls that are
@@ -85,11 +88,11 @@ end
 
 -- Make Connection strict
 setmetatable(Connection, {
-	__index = function(_, key)
-		error(string.format("Attempt to get Connection::%s (not a valid member)", tostring(key)), 2)
+	__index = function(tb, key)
+		error(("Attempt to get Connection::%s (not a valid member)"):format(tostring(key)), 2)
 	end,
-	__newindex = function(_, key, _)
-		error(string.format("Attempt to set Connection::%s (not a valid member)", tostring(key)), 2)
+	__newindex = function(tb, key, value)
+		error(("Attempt to set Connection::%s (not a valid member)"):format(tostring(key)), 2)
 	end,
 })
 
@@ -98,37 +101,20 @@ local Signal = {}
 Signal.__index = Signal
 
 function Signal.new()
-	local Obj = setmetatable({
+	return setmetatable({
 		_handlerListHead = false,
-		Invoked = {},
 	}, Signal)
-	function Obj.Invoked:Connect(fn)
-		local connection = Connection.new(Obj, fn)
-		if Obj._handlerListHead then
-			connection._next = Obj._handlerListHead
-			Obj._handlerListHead = connection
-		else
-			Obj._handlerListHead = connection
-		end
-		return connection
-	end
-	-- Implement Signal:Wait() in terms of a temporary connection using
-	-- a Signal:Connect() which disconnects itself.
-	function Obj.Invoked:Wait()
-		local waitingCoroutine = coroutine.running()
-		local callerScript = getfenv(2).script
+end
 
-		local cn
-		cn = self:Connect(function(...)
-			cn:Disconnect()
-			if callerScript:FindFirstAncestorOfClass("DataModel") then
-				task.spawn(waitingCoroutine, ...)
-			end
-		end)
-		return coroutine.yield()
+function Signal:Connect(fn)
+	local connection = Connection.new(self, fn)
+	if self._handlerListHead then
+		connection._next = self._handlerListHead
+		self._handlerListHead = connection
+	else
+		self._handlerListHead = connection
 	end
-
-	return Obj
+	return connection
 end
 
 -- Disconnect all handlers. Since we use a linked list it suffices to clear the
@@ -137,38 +123,57 @@ function Signal:DisconnectAll()
 	self._handlerListHead = false
 end
 
-function Signal:Destroy()
-	self:DisconnectAll()
-	table.clear(self)
-end
-
--- Signal:Invoke(...) implemented by running the handler functions on the
+-- Signal:Fire(...) implemented by running the handler functions on the
 -- coRunnerThread, and any time the resulting thread yielded without returning
 -- to us, that means that it yielded to the Roblox scheduler and has been taken
 -- over by Roblox scheduling, meaning we have to make a new coroutine runner.
-function Signal:Invoke(...)
+function Signal:Fire(...)
 	local item = self._handlerListHead
 	while item do
 		if item._connected then
 			if not freeRunnerThread then
 				freeRunnerThread = coroutine.create(runEventHandlerInFreeThread)
+				-- Get the freeRunnerThread to the first yield
+				coroutine.resume(freeRunnerThread)
 			end
-
-			if getfenv(item._fn).script:FindFirstAncestorOfClass("DataModel") then
-				task.spawn(freeRunnerThread, item._fn, ...)
-			end
+			task.spawn(freeRunnerThread, item._fn, ...)
 		end
 		item = item._next
 	end
 end
 
+-- Implement Signal:Wait() in terms of a temporary connection using
+-- a Signal:Connect() which disconnects itself.
+function Signal:Wait()
+	local waitingCoroutine = coroutine.running()
+	local cn
+	cn = self:Connect(function(...)
+		cn:Disconnect()
+		task.spawn(waitingCoroutine, ...)
+	end)
+	return coroutine.yield()
+end
+
+-- Implement Signal:Once() in terms of a connection which disconnects
+-- itself before running the handler.
+function Signal:Once(fn)
+	local cn
+	cn = self:Connect(function(...)
+		if cn._connected then
+			cn:Disconnect()
+		end
+		fn(...)
+	end)
+	return cn
+end
+
 -- Make signal strict
 setmetatable(Signal, {
-	__index = function(_, key)
-		error(string.format("Attempt to get Signal::%s (not a valid member)", tostring(key)), 2)
+	__index = function(tb, key)
+		error(("Attempt to get Signal::%s (not a valid member)"):format(tostring(key)), 2)
 	end,
-	__newindex = function(_, key, _)
-		error(string.format("Attempt to set Signal::%s (not a valid member)", tostring(key)), 2)
+	__newindex = function(tb, key, value)
+		error(("Attempt to set Signal::%s (not a valid member)"):format(tostring(key)), 2)
 	end,
 })
 
