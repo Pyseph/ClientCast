@@ -75,29 +75,6 @@ local PingRemote = ReplicatedStorage:FindFirstChild("ClientCast-Ping")
 
 local Signal = require(script.Signal)
 
-local function SafeRemoteInvoke(RemoteFunction, Player, MaxYield)
-	local ThreadResumed = false
-	local Thread = coroutine.running()
-
-	task.spawn(function()
-		local TimestampStart = time()
-		RemoteFunction:InvokeClient(Player)
-		local TimestampEnd = time()
-
-		ThreadResumed = true
-		task.spawn(Thread, math.min(TimestampEnd - TimestampStart, MaxYield))
-	end)
-
-	task.delay(MaxYield, function()
-		if not ThreadResumed then
-			ThreadResumed = true
-			task.spawn(Thread, MaxYield)
-		end
-	end)
-
-	return coroutine.yield()
-end
-
 local function SerializeParams(Params)
 	return {
 		FilterDescendantsInstances = Params.FilterDescendantsInstances,
@@ -120,11 +97,6 @@ local function AssertClass(Object, ExpectedClass, Message)
 		error(string.format(Message, ExpectedClass, Object.Class), 4)
 	end
 end
-local function AssertNaN(Object, Message)
-	if Object ~= Object then
-		error(string.format(Message, "number", typeof(Object)), 4)
-	end
-end
 local function IsValidOwner(Value, Error)
 	local IsInstance = IsA(Value, "Instance")
 	if not IsInstance and Value ~= nil then
@@ -133,18 +105,30 @@ local function IsValidOwner(Value, Error)
 		error(Error or "SetOwner only takes player or 'nil' instance as an argument.", 4)
 	end
 end
-local function IsValid(SerializedResult)
+local function DeserializeRaycastResult(SerializedResult)
 	if not IsA(SerializedResult, "table") then
 		return false
 	end
 
-	return (
-		SerializedResult.Instance ~= nil
-		and (SerializedResult.Instance:IsA("BasePart") or SerializedResult.Instance:IsA("Terrain"))
-	)
-		and IsA(SerializedResult.Position, "Vector3")
-		and IsA(SerializedResult.Material, "EnumItem")
-		and IsA(SerializedResult.Normal, "Vector3")
+	local HitInstance, Position, Material, Normal = unpack(SerializedResult)
+	local IsValid = (
+			HitInstance ~= nil
+			and (HitInstance:IsA("BasePart") or HitInstance:IsA("Terrain"))
+		)
+		and IsA(Position, "Vector3")
+		and IsA(Material, "EnumItem")
+		and IsA(Normal, "Vector3")
+
+	if IsValid then
+		return true, {
+			Instance = HitInstance,
+			Position = Position,
+			Material = Material,
+			Normal = Normal,
+		}
+	else
+		return false
+	end
 end
 
 local Replication = {}
@@ -164,12 +148,13 @@ function ReplicationBase:Start()
 	})
 
 	local LocalizedConnection
-	LocalizedConnection = ReplicationRemote.OnServerEvent:Connect(function(Player, CasterId, Code, RaycastResult)
+	LocalizedConnection = ReplicationRemote.OnServerEvent:Connect(function(Player, CasterId, Code, SerializedRaycastResult)
 		if self.Caster.Disabled or self.Caster._UniqueId ~= CasterId then
 			return
 		end
+		local IsValid, RaycastResult = DeserializeRaycastResult(SerializedRaycastResult)
 
-		if Player == Owner and IsValid(RaycastResult) and (Code == "Any" or Code == "Humanoid") then
+		if Player == Owner and IsValid and (Code == "Any" or Code == "Humanoid") then
 			local Humanoid
 			if Code == "Humanoid" then
 				local Model = RaycastResult.Instance:FindFirstAncestorOfClass("Model")
@@ -431,41 +416,6 @@ end
 ]=]
 function ClientCaster:GetOwner()
 	return self.Owner
-end
---[=[
-	Determines how long the ClientCaster:GetPing() method can yield for before resuming, to protect against potential exploiting.
-	Default exhaustion time is 1.
-	@param Time number
-]=]
-function ClientCaster:SetMaxPingExhaustion(Time)
-	AssertType(Time, "number", "Unexpected argument #1 to 'ClientCaster.SetMaxPingExhaustion' (%s expected, got %s)")
-	AssertNaN(Time, "Unexpected argument #1 to 'ClientCaster.SetMaxPingExhaustion' (%s expected, got NaN)")
-	if Time < 0.1 then
-		error("The max ping exhaustion time passed to 'ClientCaster.SetMaxPingExhaustion' must be longer than 0.1", 3)
-		return
-	end
-
-	self._ExhaustionTime = Time
-end
---[=[
-	Returns how long the ClientCaster:GetPing() method can yield before resuming.
-	@return number
-]=]
-function ClientCaster:GetMaxPingExhaustion()
-	return self._ExhaustionTime
-end
---[=[
-	If the ClientCaster object has a set Owner, it will return the ping of that player by calculating delay between client-server.
-	NOTE This is a yielding function, and it will yield until it gets the players ping.
-	@return number
-	@yields
-]=]
-function ClientCaster:GetPing()
-	if self.Owner == nil then
-		return 0
-	end
-
-	return SafeRemoteInvoke(PingRemote, self.Owner, self._ExhaustionTime)
 end
 --[=[
 	Sets this ClientCaster's object which it will raycast from to Object.

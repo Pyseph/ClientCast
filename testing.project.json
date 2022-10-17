@@ -10,7 +10,14 @@
 		},
 		"ServerScriptService": {
 			"$className": "ServerScriptService",
-			"$path": "testing"
+			"$path": "testing/server"
+		},
+		"StarterPlayer": {
+			"$className": "StarterPlayer",
+			"StarterPlayerScripts": {
+				"$className": "StarterPlayerScripts",
+				"$path": "testing/client"
+			}
 		}
 	}
 }

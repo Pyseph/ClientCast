@@ -207,10 +207,10 @@ end
 
 local function SerializeResult(Result)
 	return {
-		Instance = Result.Instance,
-		Position = Result.Position,
-		Material = Result.Material,
-		Normal = Result.Normal,
+		Result.Instance,
+		Result.Position,
+		Result.Material,
+		Result.Normal,
 	}
 end
 local function DeserializeParams(Input)
