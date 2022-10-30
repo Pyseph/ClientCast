@@ -141,7 +141,7 @@ function ClientCast.new(Object, RaycastParameters, UniqueId)
 
 	local function OnDamagePointAdded(Attachment)
 		if
-			Attachment.ClassName == "Attachment"
+			Attachment:IsA("Attachment")
 			and Attachment.Name == Settings.AttachmentName
 			and not DamagePoints[Attachment]
 		then
