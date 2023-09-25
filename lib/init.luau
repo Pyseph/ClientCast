@@ -471,7 +471,7 @@ function ClientCaster:EditRaycastParams(RaycastParameters)
 	end
 end
 --[=[
-	when set to true, the ClientCasterobject will search for Raycast points (DmgPoints) from the whole Object's descendants, rather then the Object's direct children.
+	when set to true, the ClientCaster object will search for Raycast points (DmgPoints) from the whole Object's descendants, rather then the Object's direct children.
 	Useful for whole model hitboxes and characters.
 	@param Recursive boolean
 ]=]
