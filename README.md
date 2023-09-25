@@ -1,8 +1,8 @@
 ## Table of Contents
-- [Introduction](https://pysephwasntavailable.github.io/ClientCast#introduction)
-- [Example Usage](https://pysephwasntavailable.github.io/ClientCast#example-usage)
-- [Setup](https://pysephwasntavailable.github.io/ClientCast#setup)
-- [Links](https://pysephwasntavailable.github.io/ClientCast#links)
+- [Introduction](https://pyseph.github.io/ClientCast#introduction)
+- [Example Usage](https://pyseph.github.io/ClientCast#example-usage)
+- [Setup](https://pyseph.github.io/ClientCast#setup)
+- [Links](https://pyseph.github.io/ClientCast#links)
 
 ## Introduction
 ClientCast is a simple and elegant solution to handling weapon hitboxes. This module is written with efficiency, simplicity and customizability in mind. This module is meant to be bareboned. ClientCast relies solely on raycasts to provide with hitbox data, and as such is not only extremely efficient, but also provides detailed information on where and when it hit an object. If you would like to get extra data or add your own functions, the best solution would be to simply wrap the object and add your own methods onto it.
@@ -71,6 +71,6 @@ Caster:Start()
 
 ## Links
 
-- [Example Usage](https://pysephwasntavailable.github.io/ClientCast#example-usage)
-- [Setup](https://pysephwasntavailable.github.io/ClientCast#setup)
-- [ClientCast API](https://pysephwasntavailable.github.io/ClientCast/api/ClientCast)
+- [Example Usage](https://pyseph.github.io/ClientCast#example-usage)
+- [Setup](https://pyseph.github.io/ClientCast#setup)
+- [ClientCast API](https://pyseph.github.io/ClientCast/api/ClientCast)
