@@ -2,12 +2,12 @@ local Module = {}
 
 local function UpdateCasterEvents(Caster, RaycastResult)
 	if RaycastResult then
-		--Collided event
+		Caster:_Collided(RaycastResult)
 
 		local ModelAncestor = RaycastResult.Instance:FindFirstAncestorOfClass("Model")
 		local Humanoid = ModelAncestor and ModelAncestor:FindFirstChildOfClass("Humanoid")
 		if Humanoid then
-			-- HumanoidCollided event
+			Caster:_HumanoidCollided(Humanoid, RaycastResult)
 		end
 	end
 end
