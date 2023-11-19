@@ -5,6 +5,7 @@ local CasterDebugger = {}
 CasterDebugger.__index = CasterDebugger
 
 function CasterDebugger:Start(Attachments)
+	self.Active = true
 	for Attachment in Attachments do
 		local Trail = Instance.new("Trail")
 		local TrailAttachment = Instance.new("Attachment")
@@ -32,6 +33,7 @@ function CasterDebugger:Start(Attachments)
 	end
 end
 function CasterDebugger:Stop()
+	self.Active = false
 	for Attachment, Trail in self.DebugLines do
 		Trail.Attachment1:Destroy()
 		Trail:Destroy()

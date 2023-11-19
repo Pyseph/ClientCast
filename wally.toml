@@ -1,0 +1,11 @@
+[package]
+name = "pyseph/clientcast"
+version = "2.0.0"
+registry = "https://github.com/UpliftGames/wally-index"
+realm = "shared"
+description = "A client-based hitbox raycasting system for Roblox."
+authors = [ "Pyseph" ]
+license = "MIT"
+
+[dependencies]
+Signal = "stravant/goodsignal@0.2.1"

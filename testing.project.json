@@ -5,7 +5,10 @@
 		"ReplicatedStorage": {
 			"$className": "ReplicatedStorage",
 			"ClientCast": {
-				"$path": "lib"
+				"$path": "lib",
+				"Packages": {
+					"$path": "Packages"
+				}
 			}
 		},
 		"ServerScriptService": {

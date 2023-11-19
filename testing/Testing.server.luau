@@ -23,6 +23,7 @@ for X = -2, 2 do
 end
 
 local ClientCaster = ClientCast.new(KillPart, RaycastParams.new(), TestingPlayer)
+
 local Debounce = {}
 ClientCaster.HumanoidCollided:Connect(function(_, HitHumanoid)
     if Debounce[HitHumanoid] then
@@ -36,3 +37,4 @@ ClientCaster.HumanoidCollided:Connect(function(_, HitHumanoid)
     Debounce[HitHumanoid] = false
 end)
 ClientCaster:Start()
+ClientCaster:StartDebug()

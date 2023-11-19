@@ -1,4 +1,5 @@
-local Module = {}
+local CasterHitbox = {}
+CasterHitbox.__index = CasterHitbox
 
 local function UpdateCasterEvents(Caster, RaycastResult)
 	if RaycastResult then
@@ -7,14 +8,14 @@ local function UpdateCasterEvents(Caster, RaycastResult)
 		local ModelAncestor = RaycastResult.Instance:FindFirstAncestorOfClass("Model")
 		local Humanoid = ModelAncestor and ModelAncestor:FindFirstChildOfClass("Humanoid")
 		if Humanoid then
-			Caster:_HumanoidCollided(Humanoid, RaycastResult)
+			Caster:_HumanoidCollided(RaycastResult, Humanoid)
 		end
 	end
 end
 
 local function Raycast(StartPosition, Direction, Caster)
-	local RaycastParameters = Caster.RaycastParameters
-	local RaycastResult = workspace:Raycast(StartPosition, Direction, RaycastParameters)
+	local RaycastParams = Caster.RaycastParams
+	local RaycastResult = workspace:Raycast(StartPosition, Direction, RaycastParams)
 
 	return RaycastResult
 end
@@ -32,7 +33,8 @@ local function UpdateAttachment(Attachment, Caster, LastAttachmentPositions)
 	LastAttachmentPositions[Attachment] = CurrentPosition
 end
 
-function Module.UpdateCaster(Caster, LastAttachmentPositions)
+function CasterHitbox:Update()
+	local Caster = self.Caster
 	local Object = Caster.Object
 	if not Object then
 		return
@@ -40,11 +42,28 @@ function Module.UpdateCaster(Caster, LastAttachmentPositions)
 
 	local RecursiveCaster = Caster.Recursive
 
-	for Attachment, DirectChild in Caster._DamagePoints do
+	local LastAttachmentPositions = self._LastAttachmentPositions
+
+	for Attachment, DirectChild in Caster._Attachments do
 		if DirectChild or RecursiveCaster then
 			UpdateAttachment(Attachment, Caster, LastAttachmentPositions)
 		end
 	end
 end
+function CasterHitbox:Stop()
+	table.clear(self._LastAttachmentPositions)
+end
+function CasterHitbox:Destroy()
+	self:Stop()
+end
 
-return Module
+function CasterHitbox.new(Caster)
+	local Hitbox = setmetatable({
+		Caster = Caster,
+		_LastAttachmentPositions = {},
+	}, CasterHitbox)
+
+	return Hitbox
+end
+
+return CasterHitbox

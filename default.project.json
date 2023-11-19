@@ -1,6 +1,9 @@
 {
 	"name": "ClientCast",
 	"tree": {
-		"$path": "lib"
+		"$path": "lib",
+		"Packages": {
+			"$path": "Packages"
+		}
 	}
 }
