@@ -1,0 +1,7 @@
+# Tools for working on ClientCast, installed with Rokit (https://github.com/rojo-rbx/rokit): run `rokit install`.
+
+[tools]
+rojo = "rojo-rbx/rojo@7.4.3"
+stylua = "JohnnyMorganz/stylua@2.5.2"
+selene = "Kampfkarren/selene@0.31.0"
+luau-lsp = "JohnnyMorganz/luau-lsp@1.68.1"

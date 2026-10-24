@@ -1,0 +1,9 @@
+[package]
+name = "pyseph/clientcast"
+version = "2.0.0"
+registry = "https://github.com/UpliftGames/wally-index"
+realm = "shared"
+description = "Hitboxes that sweep rays, spheres or parts between frames, computed on the client that swings them."
+authors = ["Pyseph"]
+license = "MIT"
+include = ["lib", "default.project.json", "wally.toml", "LICENSE", "README.md"]
