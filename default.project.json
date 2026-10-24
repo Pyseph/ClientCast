@@ -1,5 +1,6 @@
 {
 	"name": "ClientCast",
+	"emitLegacyScripts": false,
 	"tree": {
 		"$path": "lib"
 	}
