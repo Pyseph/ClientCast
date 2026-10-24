@@ -5,7 +5,7 @@
 		"ReplicatedStorage": {
 			"$className": "ReplicatedStorage",
 			"ClientCast": {
-				"$path": "lib"
+				"$path": "default.project.json"
 			}
 		},
 		"ServerScriptService": {
