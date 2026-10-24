@@ -41,6 +41,7 @@ Put attachments named `DmgPoint` in the handle where the blade is; every one swe
 - A part with no points sweeps **its own shape**: balls as spheres, everything else as its box (and as its real shape once Roblox enables Shapecast's start position).
 - **`Hit` fires once per target per activation**, an activation being one `Start` to its `Stop`. A model with a humanoid is one target, whichever part (or accessory) the cast touched; anything else is its own target.
 - Characters that were hit stop blocking: later sweeps go through them, so one swing cuts through a crowd. Walls and other parts still block.
+- To stop at the first hit, as a projectile or a single-target attack does, call `Stop` in the `Hit` handler: the rest of that frame's casts don't count.
 - Casts always leave out the object itself and the model holding it, so a sword never hits its wielder.
 - Points are found again on every `Start`, so you can add or remove them between swings.
 - Only movement casts: a hitbox that stands still hits nothing (use `GetPartBoundsInBox` and friends for that). Jumps over 100 studs in one frame, like teleports, aren't swept.
@@ -90,16 +91,17 @@ Finds a caster on `Object`. On a client this gets the copy of a caster the serve
 
 With an `Owner`, the server's caster doesn't cast. Its `Start` and `Stop` go to the owner's client, which casts and sends each hit back, and the server's `Hit` fires when it arrives.
 
+With StreamingEnabled, an owner can only cast an object that has streamed in for them. Each `Start` sends the object again, so a caster whose object streams in late casts from its next `Start` on.
+
 Ping doesn't lose hits: after `Stop`, the server keeps taking the owner's hits from that activation until the owner says it's done (or 2 seconds pass), so a hit from a player with 300 ms of ping still counts, and fast combos with several swings in flight are told apart.
 
 The owner's client has a copy of the caster, and its `Hit` fires right when the client's own cast hits, which is the place for hit sounds and effects. That copy can also be started and stopped by the client itself, to skip the round trip before a swing begins:
 
 ```lua
 -- LocalScript
-local Caster = ClientCast.Get(Tool.Handle)
-
 Tool.Activated:Connect(function()
 	SwingRemote:FireServer() -- the server checks the swing is allowed and calls Caster:Start()
+	local Caster = ClientCast.Get(Tool.Handle) -- nil until the server's caster has reached this client
 	if Caster then
 		Caster:Start() -- cast right away instead of when the server's Start arrives
 		task.wait(0.4)
